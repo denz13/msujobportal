@@ -15,19 +15,25 @@ trait ProfileValidationRules
     protected function profileRules(?int $userId = null): array
     {
         return [
-            'name' => $this->nameRules(),
+            'firstname' => ['required', 'string', 'max:255'],
+            'middlename' => ['nullable', 'string', 'max:255'],
+            'lastname' => ['required', 'string', 'max:255'],
+            'suffix' => ['nullable', 'string', 'max:255'],
+            'gender' => ['nullable', 'string', 'max:50'],
+            'date_of_birth' => ['nullable', 'date'],
+            'age' => ['nullable', 'integer', 'min:0', 'max:255'],
+            'address' => ['nullable', 'string', 'max:255'],
             'email' => $this->emailRules($userId),
-        ];
-    }
+            'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,gif', 'max:2048'],
 
-    /**
-     * Get the validation rules used to validate user names.
-     *
-     * @return array<int, \Illuminate\Contracts\Validation\Rule|array<mixed>|string>
-     */
-    protected function nameRules(): array
-    {
-        return ['required', 'string', 'max:255'];
+            // Employer information fields (optional, mainly for employer role)
+            'position' => ['nullable', 'string', 'max:255'],
+            'contact_number' => ['nullable', 'string', 'max:255'],
+            'business_address' => ['nullable', 'string', 'max:255'],
+            'business_permit' => ['nullable', 'file', 'mimes:jpeg,jpg,png,gif,pdf', 'max:5120'],
+            'tin' => ['nullable', 'string', 'max:255'],
+            'type_of_business' => ['nullable', 'string', 'max:255'],
+        ];
     }
 
     /**

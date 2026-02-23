@@ -35,13 +35,35 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
+        $employerProfile = null;
+
+        if ($user && $user->role === 'employer') {
+            // Load employer information relation if not already loaded
+            $user->loadMissing('employerInformation');
+
+            $employerInfo = $user->employerInformation;
+
+            $employerProfile = [
+                'has_information' => (bool) $employerInfo,
+                'is_complete' => $employerInfo ? $employerInfo->isComplete() : false,
+                'status' => $employerInfo?->status,
+                'is_approved' => $employerInfo && $employerInfo->isComplete() && $employerInfo->status === 'approved',
+            ];
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
             ],
+            'employerProfile' => $employerProfile,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'flash' => [
+                'toast' => $request->session()->get('toast'),
+            ],
         ];
     }
 }

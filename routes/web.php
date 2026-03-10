@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Jobs\ListRequestJobsPostController;
 use App\Http\Controllers\Jobs\PostJobsController;
+use App\Http\Controllers\Notifications\NotificationController;
 use App\Http\Controllers\UserManagement\EmployerAccountController;
 use App\Models\post_jobs;
 use Illuminate\Support\Facades\Auth;
@@ -34,6 +35,10 @@ Route::get('dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::patch('notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+
     Route::get('jobs/list-request-jobs-post', [ListRequestJobsPostController::class, 'index'])->name('list-request-jobs-post.index');
     Route::patch('jobs/list-request-jobs-post/{id}/approve', [ListRequestJobsPostController::class, 'approve'])->name('list-request-jobs-post.approve');
     Route::patch('jobs/list-request-jobs-post/{id}/decline', [ListRequestJobsPostController::class, 'decline'])->name('list-request-jobs-post.decline');

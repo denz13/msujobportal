@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Jobs;
 
 use App\Http\Controllers\Controller;
 use App\Models\post_jobs;
+use App\Notifications\SystemNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -90,6 +91,17 @@ class ListRequestJobsPostController extends Controller
         $job->remarks = 'Approved. Your job has been evaluated.';
         $job->save();
 
+        $job->loadMissing('user');
+        if ($job->user) {
+            $job->user->notify(new SystemNotification(
+                title: 'Job post approved',
+                message: "Your job post \"{$job->job_title}\" has been approved and evaluated.",
+                actionUrl: '/jobs/post-jobs',
+                level: 'success',
+                meta: ['job_id' => $job->id, 'status' => 'approved'],
+            ));
+        }
+
         return response()->json([
             'message' => 'Job approved successfully. It has been marked as evaluated.',
         ]);
@@ -109,6 +121,17 @@ class ListRequestJobsPostController extends Controller
         $job->status = 'declined';
         $job->remarks = $request->input('remarks');
         $job->save();
+
+        $job->loadMissing('user');
+        if ($job->user) {
+            $job->user->notify(new SystemNotification(
+                title: 'Job post declined',
+                message: "Your job post \"{$job->job_title}\" was declined. Remarks: {$job->remarks}",
+                actionUrl: '/jobs/post-jobs',
+                level: 'error',
+                meta: ['job_id' => $job->id, 'status' => 'declined'],
+            ));
+        }
 
         return response()->json([
             'message' => 'Job declined. Remarks have been saved.',

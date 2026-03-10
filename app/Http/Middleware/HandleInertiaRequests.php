@@ -38,6 +38,7 @@ class HandleInertiaRequests extends Middleware
         $user = $request->user();
 
         $employerProfile = null;
+        $unreadNotificationsCount = 0;
 
         if ($user && $user->role === 'employer') {
             // Load employer information relation if not already loaded
@@ -53,6 +54,10 @@ class HandleInertiaRequests extends Middleware
             ];
         }
 
+        if ($user) {
+            $unreadNotificationsCount = $user->unreadNotifications()->count();
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -60,6 +65,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user,
             ],
             'employerProfile' => $employerProfile,
+            'unreadNotificationsCount' => $unreadNotificationsCount,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'flash' => [
                 'toast' => $request->session()->get('toast'),

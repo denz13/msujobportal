@@ -5,6 +5,7 @@ namespace App\Http\Controllers\UserManagement;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\employer_information;
+use App\Notifications\SystemNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -162,6 +163,20 @@ class EmployerAccountController extends Controller
         $user->status = $request->status;
         $user->save();
 
+        if ($user->role === 'employer') {
+            $level = $request->status === 'approved'
+                ? 'success'
+                : ($request->status === 'pending' ? 'info' : 'error');
+
+            $user->notify(new SystemNotification(
+                title: 'Employer account status updated',
+                message: "Your employer account status is now \"{$user->status}\".",
+                actionUrl: '/settings/profile',
+                level: $level,
+                meta: ['status' => $user->status],
+            ));
+        }
+
         $statusMessages = [
             'approved' => 'Employer account approved successfully',
             'pending' => 'Employer account set to pending',
@@ -196,6 +211,18 @@ class EmployerAccountController extends Controller
 
         $employerInfo->status = $request->status;
         $employerInfo->save();
+
+        $level = $request->status === 'approved'
+            ? 'success'
+            : ($request->status === 'pending' ? 'info' : 'error');
+
+        $user->notify(new SystemNotification(
+            title: 'Business documents status updated',
+            message: "Your business documents status is now \"{$employerInfo->status}\".",
+            actionUrl: '/settings/profile',
+            level: $level,
+            meta: ['status' => $employerInfo->status],
+        ));
 
         $statusMessages = [
             'approved' => 'Business information approved successfully',

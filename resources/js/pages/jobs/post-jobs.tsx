@@ -294,10 +294,10 @@ export default function PostJobs() {
                     </Button>
                 </div>
 
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-                    <div className="flex-1">
-                        <label htmlFor="search" className="sr-only">Search jobs</label>
-                        <div className="relative">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-1 flex-col gap-4 sm:flex-row sm:items-center">
+                        <div className="relative flex-1 sm:max-w-xs">
+                            <label htmlFor="search" className="sr-only">Search jobs</label>
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 id="search"
@@ -308,11 +308,10 @@ export default function PostJobs() {
                                 className="pl-9"
                             />
                         </div>
-                    </div>
-                    <div className="w-full sm:w-[200px]">
-                        <label htmlFor="status-filter" className="sr-only">Filter by status</label>
-                        <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-                            <SelectTrigger id="status-filter">
+                        <div className="w-full sm:w-[180px]">
+                            <label htmlFor="status-filter" className="sr-only">Filter by status</label>
+                            <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                                <SelectTrigger id="status-filter" className="w-full">
                                 <SelectValue placeholder="All Status" />
                             </SelectTrigger>
                             <SelectContent>
@@ -323,7 +322,8 @@ export default function PostJobs() {
                                     </SelectItem>
                                 ))}
                             </SelectContent>
-                        </Select>
+                            </Select>
+                        </div>
                     </div>
                 </div>
 

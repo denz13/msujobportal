@@ -16,6 +16,7 @@ class job_applications extends Model
         'post_jobs_id',
         'resume_path',
         'description',
+        'remarks',
         'status',
     ];
 

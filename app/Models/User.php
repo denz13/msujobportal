@@ -78,4 +78,12 @@ class User extends Authenticatable
     {
         return $this->hasOne(\App\Models\employer_information::class, 'users_id');
     }
+
+    /**
+     * Get the jobseeker other information (skills, work, status).
+     */
+    public function jobSeekerOtherInformation()
+    {
+        return $this->hasOne(\App\Models\job_seeker_other_information::class, 'users_id');
+    }
 }

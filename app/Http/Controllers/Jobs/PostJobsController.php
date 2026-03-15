@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Jobs;
 
 use App\Http\Controllers\Controller;
 use App\Models\post_jobs;
+use App\Models\User;
+use App\Notifications\SystemNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -118,7 +120,9 @@ class PostJobsController extends Controller
             $validated['user_id'] = Auth::id();
         }
 
-        post_jobs::query()->create($validated);
+        $job = post_jobs::query()->create($validated);
+
+        $this->notifyAdminsNewJobPost($job->job_title, $job->id, 'posted');
 
         return redirect()->route('post-jobs.index')->with('toast', [
             'type' => 'success',
@@ -145,6 +149,8 @@ class PostJobsController extends Controller
 
         $validated['status'] = 'pending';
         $post_job->update($validated);
+
+        $this->notifyAdminsNewJobPost($post_job->job_title, $post_job->id, 'updated');
 
         return redirect()->route('post-jobs.index')->with('toast', [
             'type' => 'success',
@@ -212,6 +218,30 @@ class PostJobsController extends Controller
             'number_of_vacancies' => 'nullable|integer|min:1',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
+    }
+
+    /**
+     * Notify all admin users about a new or updated job post (pending approval).
+     */
+    private function notifyAdminsNewJobPost(string $jobTitle, int $jobId, string $action): void
+    {
+        $admins = User::query()->where('role', 'admin')->get();
+        $verb = $action === 'posted' ? 'posted' : 'updated';
+        $title = "Job {$verb} for approval";
+        $message = sprintf(
+            'A job has been %s and is pending approval: "%s".',
+            $verb,
+            $jobTitle
+        );
+        $actionUrl = '/jobs/list-request-jobs-post';
+
+        /** @var User $admin */
+        foreach ($admins as $admin) {
+            $admin->notify(new SystemNotification($title, $message, $actionUrl, 'info', [
+                'job_id' => $jobId,
+                'job_title' => $jobTitle,
+            ]));
+        }
     }
 
     private function storePhoto(Request $request): ?string

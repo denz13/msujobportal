@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     Building2,
@@ -40,6 +40,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import InputError from '@/components/input-error';
 import { Pagination } from '@/components/pagination';
 import {
     Dialog,
@@ -143,6 +144,11 @@ export default function EmployerAccount({
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<'approve' | 'decline' | 'approve-business' | 'decline-business' | null>(null);
     const [employerToAction, setEmployerToAction] = useState<Employer | null>(null);
+    const [updateModalOpen, setUpdateModalOpen] = useState(false);
+    const [employerToUpdate, setEmployerToUpdate] = useState<Employer | null>(null);
+    const [isUpdateSubmitting, setIsUpdateSubmitting] = useState(false);
+    const page = usePage();
+    const formErrors = (page.props as { errors?: Record<string, string> }).errors ?? {};
 
     // Debounce search and update URL (skip on initial mount)
     useEffect(() => {
@@ -623,14 +629,15 @@ export default function EmployerAccount({
                                                                 <span>View details</span>
                                                             </DropdownMenuItem>
                                                             <DropdownMenuSeparator />
-                                                            <DropdownMenuItem asChild>
-                                                                <Link
-                                                                    href={`/user-management/employer-account/${employer.id}/edit`}
-                                                                    className="flex items-center gap-2"
-                                                                >
-                                                                    <Pencil className="size-4" />
-                                                                    <span>Update</span>
-                                                                </Link>
+                                                            <DropdownMenuItem
+                                                                onClick={() => {
+                                                                    setEmployerToUpdate(employer);
+                                                                    setUpdateModalOpen(true);
+                                                                }}
+                                                                className="flex items-center gap-2"
+                                                            >
+                                                                <Pencil className="size-4" />
+                                                                <span>Update</span>
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem
                                                                 onClick={() =>
@@ -969,6 +976,158 @@ export default function EmployerAccount({
                                         </CardContent>
                                     </Card>
                                 </div>
+                            </div>
+                        )}
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog open={updateModalOpen} onOpenChange={(open) => {
+                    setUpdateModalOpen(open);
+                    if (!open) setEmployerToUpdate(null);
+                }}>
+                    <DialogContent className="w-[95vw] max-w-[90vw] sm:max-w-[85vw] lg:max-w-7xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+                        {employerToUpdate && (
+                            <div className="space-y-4 sm:space-y-6">
+                                <DialogHeader>
+                                    <DialogTitle className="text-xl sm:text-2xl">
+                                        Update Employer Information
+                                    </DialogTitle>
+                                    <DialogDescription className="flex items-center gap-2 mt-1">
+                                        <Mail className="size-4 shrink-0" />
+                                        <span className="truncate">{employerToUpdate.display_name} • {employerToUpdate.email}</span>
+                                    </DialogDescription>
+                                </DialogHeader>
+
+                                <Card>
+                                    <CardContent className="p-4 sm:p-6">
+                                        <form
+                                            action={`/user-management/employer-account/${employerToUpdate.id}`}
+                                            method="post"
+                                            className="space-y-6"
+                                            onSubmit={(e) => {
+                                                e.preventDefault();
+                                                const form = e.currentTarget;
+                                                const formData = new FormData(form);
+                                                const data = Object.fromEntries(formData.entries());
+                                                delete data._method;
+                                                setIsUpdateSubmitting(true);
+                                                router.put(form.action, data, {
+                                                    preserveScroll: true,
+                                                    onSuccess: () => {
+                                                        setUpdateModalOpen(false);
+                                                        setEmployerToUpdate(null);
+                                                        toast.success('Employer information updated');
+                                                        router.reload({ only: ['employers', 'uniqueStatuses'] });
+                                                    },
+                                                    onError: () => {
+                                                        toast.error('Please fix the errors and try again');
+                                                    },
+                                                    onFinish: () => setIsUpdateSubmitting(false),
+                                                });
+                                            }}
+                                        >
+                                            <input type="hidden" name="_method" value="PUT" />
+
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="update-position">Position</Label>
+                                                <Input
+                                                    id="update-position"
+                                                    name="position"
+                                                    required
+                                                    defaultValue={
+                                                        employerToUpdate.employer_information?.position ?? ''
+                                                    }
+                                                    placeholder="e.g. HR Manager"
+                                                />
+                                                <InputError message={formErrors.position} />
+                                            </div>
+
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="update-contact_number">Contact number</Label>
+                                                <Input
+                                                    id="update-contact_number"
+                                                    name="contact_number"
+                                                    required
+                                                    defaultValue={
+                                                        employerToUpdate.employer_information?.contact_number ?? ''
+                                                    }
+                                                    placeholder="e.g. 09xxxxxxxxx"
+                                                />
+                                                <InputError message={formErrors.contact_number} />
+                                            </div>
+
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="update-business_address">Business address</Label>
+                                                <Input
+                                                    id="update-business_address"
+                                                    name="business_address"
+                                                    required
+                                                    defaultValue={
+                                                        employerToUpdate.employer_information?.business_address ?? ''
+                                                    }
+                                                    placeholder="Business address"
+                                                />
+                                                <InputError message={formErrors.business_address} />
+                                            </div>
+
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="update-business_permit">Business permit</Label>
+                                                <Input
+                                                    id="update-business_permit"
+                                                    name="business_permit"
+                                                    required
+                                                    defaultValue={
+                                                        employerToUpdate.employer_information?.business_permit ?? ''
+                                                    }
+                                                    placeholder="Permit / reference number"
+                                                />
+                                                <InputError message={formErrors.business_permit} />
+                                            </div>
+
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="update-tin">TIN</Label>
+                                                <Input
+                                                    id="update-tin"
+                                                    name="tin"
+                                                    required
+                                                    defaultValue={employerToUpdate.employer_information?.tin ?? ''}
+                                                    placeholder="Tax Identification Number"
+                                                />
+                                                <InputError message={formErrors.tin} />
+                                            </div>
+
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="update-type_of_business">Type of business</Label>
+                                                <Input
+                                                    id="update-type_of_business"
+                                                    name="type_of_business"
+                                                    required
+                                                    defaultValue={
+                                                        employerToUpdate.employer_information?.type_of_business ?? ''
+                                                    }
+                                                    placeholder="e.g. Retail"
+                                                />
+                                                <InputError message={formErrors.type_of_business} />
+                                            </div>
+
+                                            <DialogFooter className="gap-2 sm:gap-0 pt-4">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        setUpdateModalOpen(false);
+                                                        setEmployerToUpdate(null);
+                                                    }}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                                <Button type="submit" disabled={isUpdateSubmitting}>
+                                                    Save
+                                                </Button>
+                                            </DialogFooter>
+                                        </form>
+                                    </CardContent>
+                                </Card>
                             </div>
                         )}
                     </DialogContent>

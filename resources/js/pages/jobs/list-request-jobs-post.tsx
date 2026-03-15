@@ -211,10 +211,10 @@ export default function ListRequestJobsPost() {
                     />
                 </div>
 
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-                    <div className="flex-1">
-                        <label htmlFor="search" className="sr-only">Search</label>
-                        <div className="relative">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-1 flex-col gap-4 sm:flex-row sm:items-center">
+                        <div className="relative flex-1 sm:max-w-xs">
+                            <label htmlFor="search" className="sr-only">Search</label>
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 id="search"
@@ -225,22 +225,22 @@ export default function ListRequestJobsPost() {
                                 className="pl-9"
                             />
                         </div>
-                    </div>
-                    <div className="w-full sm:w-[200px]">
-                        <label htmlFor="status-filter" className="sr-only">Filter by status</label>
-                        <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-                            <SelectTrigger id="status-filter">
-                                <SelectValue placeholder="All Status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Status</SelectItem>
-                                {uniqueStatuses.map((s) => (
-                                    <SelectItem key={s} value={s}>
-                                        <span className="capitalize">{s}</span>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <div className="w-full sm:w-[180px]">
+                            <label htmlFor="status-filter" className="sr-only">Filter by status</label>
+                            <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                                <SelectTrigger id="status-filter" className="w-full">
+                                    <SelectValue placeholder="All Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Status</SelectItem>
+                                    {uniqueStatuses.map((s) => (
+                                        <SelectItem key={s} value={s}>
+                                            <span className="capitalize">{s}</span>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                 </div>
 
@@ -263,12 +263,12 @@ export default function ListRequestJobsPost() {
                             {jobs.map((job) => (
                                 <div
                                     key={job.id}
-                                    className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-3 xl:col-span-2"
+                                    className="isolate col-span-12 sm:col-span-6 lg:col-span-4 xl:col-span-3"
                                 >
-                                    <Card className="overflow-hidden">
-                                        <div className="p-4">
-                                            {/* Image + overlay - smaller height */}
-                                            <div className="relative h-28 overflow-hidden rounded-md 2xl:h-36 before:absolute before:inset-0 before:z-10 before:block before:bg-gradient-to-t before:from-black before:to-black/10 before:content-['']">
+                                    <Card className="relative flex min-h-0 flex-col gap-0 overflow-visible py-0">
+                                        <div className="min-h-0 flex-1 p-5">
+                                            {/* Image + overlay - h-40 2xl:h-56 like reference */}
+                                            <div className="relative h-40 overflow-hidden rounded-md 2xl:h-56 before:absolute before:inset-0 before:z-10 before:block before:bg-gradient-to-t before:from-black before:to-black/10 before:content-['']">
                                                 {job.photo ? (
                                                     <img
                                                         src={photoUrl(job.photo) ?? ''}
@@ -280,45 +280,45 @@ export default function ListRequestJobsPost() {
                                                         <Briefcase className="h-10 w-10 text-muted-foreground" />
                                                     </div>
                                                 )}
-                                                <span className="absolute left-3 top-3 z-20 rounded bg-amber-500/80 px-1.5 py-0.5 text-[10px] font-medium capitalize text-white">
+                                                <span className="absolute left-0 top-0 z-20 m-5 rounded bg-amber-500/80 px-2 py-1 text-xs font-medium capitalize text-white">
                                                     {(job.status ?? '—').replace(/_/g, ' ')}
                                                 </span>
-                                                <div className="absolute bottom-0 left-0 right-0 z-20 px-3 pb-3 text-white">
-                                                    <p className="block truncate text-sm font-medium leading-tight">
+                                                <div className="absolute bottom-0 left-0 right-0 z-20 px-5 pb-6 text-white">
+                                                    <p className="block truncate text-base font-medium leading-tight">
                                                         {job.job_title}
                                                     </p>
-                                                    <span className="mt-1 block truncate text-[10px] text-white/90">
+                                                    <span className="mt-3 block truncate text-xs text-white/90">
                                                         {job.job_category ?? '—'}
                                                     </span>
                                                 </div>
                                             </div>
-                                            {/* Body: 3 rows */}
-                                            <div className="mt-3 text-slate-600 dark:text-slate-500">
-                                                <div className="flex items-center gap-1.5 text-xs">
-                                                    <DollarSign className="h-3.5 w-3.5 shrink-0" />
+                                            {/* Body: 3 rows - mt-5, mt-2 like reference */}
+                                            <div className="mt-5 text-slate-600 dark:text-slate-500">
+                                                <div className="flex items-center text-sm">
+                                                    <DollarSign className="mr-2 h-4 w-4 shrink-0" />
                                                     <span className="truncate">Salary: {job.salary ?? '—'}</span>
                                                 </div>
-                                                <div className="mt-1.5 flex items-center gap-1.5 text-xs">
-                                                    <Users className="h-3.5 w-3.5 shrink-0" />
+                                                <div className="mt-2 flex items-center text-sm">
+                                                    <Users className="mr-2 h-4 w-4 shrink-0" />
                                                     <span className="truncate">Vacancies: {job.number_of_vacancies ?? '—'}</span>
                                                 </div>
-                                                <div className="mt-1.5 flex items-center gap-1.5 text-xs">
-                                                    <CheckSquare className="h-3.5 w-3.5 shrink-0" />
+                                                <div className="mt-2 flex items-center text-sm">
+                                                    <CheckSquare className="mr-2 h-4 w-4 shrink-0" />
                                                     <span className="truncate capitalize">
                                                         Status: {(job.status ?? '—').replace(/_/g, ' ')}
                                                     </span>
                                                 </div>
                                             </div>
                                         </div>
-                                        {/* Footer: Preview · Approve · Decline (Approve/Decline only for pending) */}
-                                        <div className="flex items-center justify-start gap-0.5 border-t border-slate-200/60 px-2 py-2 dark:border-border">
+                                        {/* Footer: justify-center lg:justify-end, p-5 like reference */}
+                                        <div className="flex shrink-0 items-center justify-center gap-2 border-t border-slate-200/60 bg-card p-5 dark:border-border lg:justify-end">
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="gap-1 text-[10px] font-medium text-primary hover:bg-primary/10"
+                                                className="gap-1.5 text-xs font-medium text-primary hover:bg-primary/10 lg:mr-auto"
                                                 onClick={() => setDetailsJob(job)}
                                             >
-                                                <Eye className="h-3 w-3" />
+                                                <Eye className="h-4 w-4" />
                                                 Preview
                                             </Button>
                                             {(job.status ?? '').toLowerCase() === 'pending' && (
@@ -326,22 +326,22 @@ export default function ListRequestJobsPost() {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        className="gap-1 text-[10px] font-medium text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
+                                                        className="gap-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
                                                         onClick={() => setApproveConfirmJob(job)}
                                                     >
-                                                        <CheckCircle2 className="h-3 w-3" />
+                                                        <CheckCircle2 className="h-4 w-4" />
                                                         Approve
                                                     </Button>
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        className="gap-1 text-[10px] font-medium text-destructive hover:bg-destructive/10"
+                                                        className="gap-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
                                                         onClick={() => {
                                                             setDeclineJob(job);
                                                             setDeclineRemarks('');
                                                         }}
                                                     >
-                                                        <XCircle className="h-3 w-3" />
+                                                        <XCircle className="h-4 w-4" />
                                                         Decline
                                                     </Button>
                                                 </>

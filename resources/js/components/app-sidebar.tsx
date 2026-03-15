@@ -53,7 +53,7 @@ const defaultNavGroups: NavGroup[] = [
         items: [
             {
                 title: 'List Applicants',
-                href: '/applicants/list-applicants',
+                href: '/applicants/list-of-applied-applicants',
                 icon: Users,
             },
         ],

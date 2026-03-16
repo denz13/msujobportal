@@ -37,8 +37,8 @@ export function NavMain({
                                         isActive={isCurrentUrl(item.href)}
                                         tooltip={{ children: item.title }}
                                     >
-                                        <Link href={item.href} prefetch>
-                                            {item.icon && <item.icon />}
+                                        <Link href={item.href} prefetch className="group">
+                                            {item.icon && <item.icon className={item.iconClassName ?? 'h-5 w-5 shrink-0'} />}
                                             <span>{item.title}</span>
                                         </Link>
                                     </SidebarMenuButton>
@@ -63,8 +63,8 @@ export function NavMain({
                             isActive={isCurrentUrl(item.href)}
                             tooltip={{ children: item.title }}
                         >
-                            <Link href={item.href} prefetch>
-                                {item.icon && <item.icon />}
+                            <Link href={item.href} prefetch className="group">
+                                {item.icon && <item.icon className={item.iconClassName ?? 'h-5 w-5 shrink-0'} />}
                                 <span>{item.title}</span>
                             </Link>
                         </SidebarMenuButton>

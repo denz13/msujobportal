@@ -30,6 +30,7 @@ const defaultNavGroups: NavGroup[] = [
                 title: 'Dashboard',
                 href: dashboard(),
                 icon: LayoutGrid,
+                iconClassName: 'h-5 w-5 shrink-0 text-emerald-500 transition-all duration-200 group-hover:scale-110 group-hover:rotate-6 group-hover:text-emerald-400',
             },
         ],
     },
@@ -40,11 +41,13 @@ const defaultNavGroups: NavGroup[] = [
                 title: 'Post Jobs',
                 href: '/jobs/post-jobs',
                 icon: Building2,
+                iconClassName: 'h-5 w-5 shrink-0 text-blue-500 transition-all duration-200 group-hover:scale-110 group-hover:rotate-6 group-hover:text-blue-400',
             },
             {
                 title: 'List Request Jobs Post',
                 href: '/jobs/list-request-jobs-post',
                 icon: FileText,
+                iconClassName: 'h-5 w-5 shrink-0 text-amber-500 transition-all duration-200 group-hover:scale-110 group-hover:rotate-6 group-hover:text-amber-400',
             },
         ],
     },
@@ -55,17 +58,18 @@ const defaultNavGroups: NavGroup[] = [
                 title: 'List Applicants',
                 href: '/applicants/list-of-applied-applicants',
                 icon: Users,
+                iconClassName: 'h-5 w-5 shrink-0 text-violet-500 transition-all duration-200 group-hover:scale-110 group-hover:rotate-6 group-hover:text-violet-400',
             },
         ],
     },
-    
     {
         label: 'User Management',
         items: [
             {
                 title: 'Employer Accounts',
-                href: '/user-management/employer-account', // Update with actual route
+                href: '/user-management/employer-account',
                 icon: Users,
+                iconClassName: 'h-5 w-5 shrink-0 text-rose-500 transition-all duration-200 group-hover:scale-110 group-hover:rotate-6 group-hover:text-rose-400',
             },
         ],
     },
@@ -79,6 +83,7 @@ const employerIncompleteNavGroups: NavGroup[] = [
                 title: 'Profile settings',
                 href: profileEdit().url,
                 icon: User,
+                iconClassName: 'h-5 w-5 shrink-0 text-cyan-500 transition-all duration-200 group-hover:scale-110 group-hover:rotate-6 group-hover:text-cyan-400',
             },
         ],
     },

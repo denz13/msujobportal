@@ -1,5 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
-import { Briefcase, Building2 } from 'lucide-react';
+import { useState } from 'react';
+import { Briefcase, Building2, Eye, EyeOff } from 'lucide-react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,8 @@ import { login } from '@/routes';
 import { store } from '@/routes/register';
 
 export default function Register() {
+    const [showPassword, setShowPassword] = useState(false);
+    const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
     return (
         <>
             <Head title="Register">
@@ -49,14 +52,21 @@ export default function Register() {
                         {/* Left — copy */}
                         <section className="space-y-5 text-center md:text-left">
                             <div
-                                className="animate-fade-in inline-flex rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2 shadow-lg shadow-slate-900/50"
+                                className="animate-fade-in flex items-center justify-center gap-2 md:justify-start"
                                 style={{ animationDelay: '0ms', animationFillMode: 'both' }}
                             >
-                                <span className="text-sm font-medium text-emerald-400">Join as employer or job seeker</span>
+                                <Briefcase className="h-8 w-8 text-[#d4af37]" aria-hidden />
+                                <span className="text-xl font-bold text-white">JobPortal</span>
+                            </div>
+                            <div
+                                className="animate-fade-in inline-flex rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2 shadow-lg shadow-slate-900/50"
+                                style={{ animationDelay: '50ms', animationFillMode: 'both' }}
+                            >
+                                <span className="text-sm font-medium text-emerald-400">Join as employer</span>
                             </div>
                             <h1
                                 className="animate-fade-in text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl"
-                                style={{ animationDelay: '50ms', animationFillMode: 'both' }}
+                                style={{ animationDelay: '100ms', animationFillMode: 'both' }}
                             >
                                 <span className="bg-gradient-to-r from-emerald-400 via-[#1a4d2e] to-slate-200 bg-clip-text text-transparent">
                                     Create an account
@@ -64,9 +74,9 @@ export default function Register() {
                             </h1>
                             <p
                                 className="animate-fade-in text-sm leading-relaxed text-slate-400"
-                                style={{ animationDelay: '100ms', animationFillMode: 'both' }}
+                                style={{ animationDelay: '150ms', animationFillMode: 'both' }}
                             >
-                                Enter your details below to get started. You can post jobs as an employer or apply as a job seeker.
+                                Enter your details below to get started and post jobs.
                             </p>
                         </section>
 
@@ -167,31 +177,53 @@ export default function Register() {
 
                                             <div className="grid gap-2">
                                                 <Label htmlFor="password" className="text-slate-200">Password</Label>
-                                                <Input
-                                                    id="password"
-                                                    type="password"
-                                                    required
-                                                    tabIndex={6}
-                                                    autoComplete="new-password"
-                                                    name="password"
-                                                    placeholder="Password"
-                                                    className="border-slate-600 bg-slate-900/50 text-white placeholder:text-slate-500 focus-visible:ring-emerald-500"
-                                                />
+                                                <div className="relative">
+                                                    <Input
+                                                        id="password"
+                                                        type={showPassword ? 'text' : 'password'}
+                                                        required
+                                                        tabIndex={6}
+                                                        autoComplete="new-password"
+                                                        name="password"
+                                                        placeholder="Password"
+                                                        className="border-slate-600 bg-slate-900/50 pr-10 text-white placeholder:text-slate-500 focus-visible:ring-emerald-500"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowPassword((v) => !v)}
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1.5 text-slate-400 hover:text-slate-200"
+                                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                                        tabIndex={-1}
+                                                    >
+                                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                    </button>
+                                                </div>
                                                 <InputError message={errors.password} />
                                             </div>
 
                                             <div className="grid gap-2">
                                                 <Label htmlFor="password_confirmation" className="text-slate-200">Confirm password</Label>
-                                                <Input
-                                                    id="password_confirmation"
-                                                    type="password"
-                                                    required
-                                                    tabIndex={7}
-                                                    autoComplete="new-password"
-                                                    name="password_confirmation"
-                                                    placeholder="Confirm password"
-                                                    className="border-slate-600 bg-slate-900/50 text-white placeholder:text-slate-500 focus-visible:ring-emerald-500"
-                                                />
+                                                <div className="relative">
+                                                    <Input
+                                                        id="password_confirmation"
+                                                        type={showPasswordConfirm ? 'text' : 'password'}
+                                                        required
+                                                        tabIndex={7}
+                                                        autoComplete="new-password"
+                                                        name="password_confirmation"
+                                                        placeholder="Confirm password"
+                                                        className="border-slate-600 bg-slate-900/50 pr-10 text-white placeholder:text-slate-500 focus-visible:ring-emerald-500"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowPasswordConfirm((v) => !v)}
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1.5 text-slate-400 hover:text-slate-200"
+                                                        aria-label={showPasswordConfirm ? 'Hide password' : 'Show password'}
+                                                        tabIndex={-1}
+                                                    >
+                                                        {showPasswordConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                    </button>
+                                                </div>
                                                 <InputError message={errors.password_confirmation} />
                                             </div>
 
@@ -221,8 +253,8 @@ export default function Register() {
                 </main>
 
                 <footer className="relative z-10 border-t border-slate-800 py-4">
-                    <p className="text-center text-xs text-slate-500">
-                        © {new Date().getFullYear()} JobPortal
+                    <p className="text-center text-xs text-white">
+                        © {new Date().getFullYear()} JobPortal · Find jobs or post positions
                     </p>
                 </footer>
             </div>

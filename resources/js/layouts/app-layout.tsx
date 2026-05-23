@@ -46,7 +46,10 @@ export default function AppLayout({
                 {children}
             </AppLayoutTemplate>
 
-            <Dialog open={mustCompleteEmployerProfile && !isOnProfileSettings}>
+            <Dialog
+                open={mustCompleteEmployerProfile && !isOnProfileSettings}
+                modal={false}
+            >
                 <DialogContent className="max-w-md">
                     <DialogHeader>
                         <div className="flex items-center gap-3">

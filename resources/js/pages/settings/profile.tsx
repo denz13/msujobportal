@@ -3,7 +3,6 @@ import { Form, Head, Link, usePage, router } from '@inertiajs/react';
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { Mail, MapPin, Phone, User2, Upload, Camera, FileText, AlertTriangle, Info } from 'lucide-react';
-import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -163,43 +162,71 @@ export default function Profile({
         }
     };
 
-    const handleConfirmPhotoUpload = () => {
-        setShowPhotoConfirmDialog(false);
-        // Create form data with all current form values
-        const formData = new FormData();
-        
-        // Get all form inputs
-        const form = document.querySelector('form[action*="profile"]') as HTMLFormElement;
-        if (form) {
-            const formDataObj = new FormData(form);
-            // Copy all form data
-            for (const [key, value] of formDataObj.entries()) {
-                if (key !== 'photo') { // Don't include old photo if any
+    const appendRequiredProfileFields = (formData: FormData) => {
+        const form = document.querySelector(
+            'form[data-profile-form]',
+        ) as HTMLFormElement | null;
+
+        if (form && activeTab === 'account') {
+            const existing = new FormData(form);
+            for (const [key, value] of existing.entries()) {
+                if (key !== 'photo') {
                     formData.append(key, value);
                 }
             }
+            return;
         }
-        
-        // Add the new photo file
-        if (pendingPhotoFile) {
-            formData.append('photo', pendingPhotoFile);
+
+        formData.append('firstname', auth.user.firstname ?? '');
+        formData.append('middlename', auth.user.middlename ?? '');
+        formData.append('lastname', auth.user.lastname ?? '');
+        formData.append('suffix', auth.user.suffix ?? '');
+        formData.append('email', auth.user.email ?? '');
+        if (gender) {
+            formData.append('gender', gender);
         }
-        
-        // Submit the form
-        router.post(
-            ProfileController.update.form().action,
-            formData,
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setPendingPhotoFile(null);
-                    toast.success('Photo updated successfully');
-                },
-                onError: () => {
-                    toast.error('Failed to update photo. Please try again.');
-                },
-            }
-        );
+        if (dateOfBirth) {
+            formData.append('date_of_birth', dateOfBirth);
+        }
+        if (age !== undefined && age !== null) {
+            formData.append('age', String(age));
+        }
+        if (auth.user.address) {
+            formData.append('address', auth.user.address);
+        }
+    };
+
+    const handleConfirmPhotoUpload = () => {
+        setShowPhotoConfirmDialog(false);
+
+        if (!pendingPhotoFile) {
+            return;
+        }
+
+        const formData = new FormData();
+        appendRequiredProfileFields(formData);
+        formData.append('photo', pendingPhotoFile);
+        formData.append('_method', 'patch');
+
+        router.post(ProfileController.update.form().action, formData, {
+            preserveScroll: true,
+            forceFormData: true,
+            onSuccess: () => {
+                setPendingPhotoFile(null);
+                toast.success('Photo updated successfully');
+            },
+            onError: (errors) => {
+                const message =
+                    (typeof errors.photo === 'string' && errors.photo) ||
+                    (typeof errors.firstname === 'string' && errors.firstname) ||
+                    (typeof errors.email === 'string' && errors.email) ||
+                    (Object.values(errors).find((v) => typeof v === 'string') as
+                        | string
+                        | undefined) ||
+                    'Failed to update photo. Please try again.';
+                toast.error(message);
+            },
+        });
     };
 
     const handleCancelPhotoUpload = () => {
@@ -418,6 +445,7 @@ export default function Profile({
 
                     <Form
                         {...ProfileController.update.form()}
+                        data-profile-form
                         options={{
                             preserveScroll: true,
                         }}
@@ -1056,8 +1084,6 @@ export default function Profile({
                         }}
                     </Form>
                 </div>
-
-                <DeleteUser />
 
                 {/* Photo upload confirmation dialog */}
                 <Dialog open={showPhotoConfirmDialog} onOpenChange={setShowPhotoConfirmDialog}>

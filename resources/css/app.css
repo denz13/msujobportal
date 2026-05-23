@@ -151,4 +151,24 @@
     .scrollbar-hide::-webkit-scrollbar {
         display: none;
     }
+
+    @keyframes bell-ring {
+        0%,
+        50%,
+        100% {
+            transform: rotate(0);
+        }
+        10%,
+        30% {
+            transform: rotate(-14deg);
+        }
+        20%,
+        40% {
+            transform: rotate(14deg);
+        }
+    }
+
+    .animate-bell-ring {
+        animation: bell-ring 2.5s ease-in-out infinite;
+    }
 }

@@ -93,18 +93,22 @@ trait LogsActivity
         $oldValues = $this->removeHiddenFields($oldValues, $hiddenFields);
         $newValues = $this->removeHiddenFields($newValues, $hiddenFields);
 
-        ActivityLog::create([
-            'loggable_type' => get_class($this),
-            'loggable_id' => $this->getKey(),
-            'event' => $event,
-            'user_id' => Auth::id(),
-            'old_values' => $oldValues,
-            'new_values' => $newValues,
-            'changed_fields' => $changedFields,
-            'ip_address' => Request::ip(),
-            'user_agent' => Request::userAgent(),
-            'description' => $this->getActivityDescription($event),
-        ]);
+        try {
+            ActivityLog::create([
+                'loggable_type' => get_class($this),
+                'loggable_id' => $this->getKey(),
+                'event' => $event,
+                'user_id' => Auth::id(),
+                'old_values' => $oldValues,
+                'new_values' => $newValues,
+                'changed_fields' => $changedFields,
+                'ip_address' => Request::ip(),
+                'user_agent' => Request::userAgent(),
+                'description' => $this->getActivityDescription($event),
+            ]);
+        } catch (\Throwable) {
+            // Do not block profile updates if activity logging is unavailable.
+        }
     }
 
     /**

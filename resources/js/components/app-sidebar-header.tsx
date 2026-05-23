@@ -1,6 +1,7 @@
-import { Link, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
-import { Bell, Check, Monitor, Moon, Sun } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Bell, Check } from 'lucide-react';
+import { AppearanceToggle } from '@/components/appearance-tabs';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +14,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { UserMenuContent } from '@/components/user-menu-content';
-import { useAppearance } from '@/hooks/use-appearance';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
@@ -29,7 +29,6 @@ export function AppSidebarHeader({
         unreadNotificationsCount?: number;
     };
     const getInitials = useInitials();
-    const { appearance, updateAppearance } = useAppearance();
 
     type NotificationItem = {
         id: string;
@@ -56,6 +55,32 @@ export function AppSidebarHeader({
     useEffect(() => {
         setUnreadCount(unreadNotificationsCount);
     }, [unreadNotificationsCount]);
+
+    const refreshUnreadCount = useCallback(async () => {
+        try {
+            const res = await fetch('/notifications?limit=1', {
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin',
+            });
+            if (!res.ok) return;
+            const data = await res.json().catch(() => ({}));
+            setUnreadCount(Number(data.unread_count ?? 0));
+        } catch {
+            // ignore
+        }
+    }, []);
+
+    useEffect(() => {
+        refreshUnreadCount();
+        const intervalId = window.setInterval(refreshUnreadCount, 30_000);
+        return () => window.clearInterval(intervalId);
+    }, [refreshUnreadCount]);
+
+    useEffect(() => {
+        return router.on('success', () => {
+            refreshUnreadCount();
+        });
+    }, [refreshUnreadCount]);
 
     useEffect(() => {
         if (!notifOpen) return;
@@ -133,16 +158,22 @@ export function AppSidebarHeader({
                 <SidebarTrigger className="-ml-1" />
                 <Breadcrumbs breadcrumbs={breadcrumbs} />
             </div>
-            <div className="flex items-center gap-2">
-                <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
+            <div className="relative z-[60] flex items-center gap-2">
+                <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen} modal={false}>
                     <DropdownMenuTrigger asChild>
                         <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="relative size-9 rounded-full"
                             aria-label="Notifications"
                         >
-                            <Bell className="size-5" />
+                            <Bell
+                                className={cn(
+                                    'size-5',
+                                    unreadCount > 0 && 'origin-top animate-bell-ring',
+                                )}
+                            />
                             {unreadCount > 0 && (
                                 <Badge
                                     className="absolute -right-1 -top-1 h-4 min-w-4 rounded-full px-1 text-[10px] leading-3"
@@ -157,10 +188,14 @@ export function AppSidebarHeader({
                         <div className="flex items-center justify-between px-2 py-1.5">
                             <span className="text-sm font-medium">Notifications</span>
                             <Button
+                                type="button"
                                 variant="ghost"
                                 size="sm"
                                 className="h-7 px-2 text-xs"
-                                onClick={markAllRead}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    void markAllRead();
+                                }}
                                 disabled={unreadCount === 0 || notifLoading}
                             >
                                 <Check className="mr-1 h-3.5 w-3.5" />
@@ -185,8 +220,17 @@ export function AppSidebarHeader({
                                     return (
                                         <DropdownMenuItem
                                             key={n.id}
-                                            onSelect={(e) => e.preventDefault()}
-                                            className="flex flex-col items-start gap-1 py-2"
+                                            className="flex cursor-pointer flex-col items-start gap-1 py-2"
+                                            onSelect={(e) => {
+                                                e.preventDefault();
+                                                if (isUnread) {
+                                                    void markRead(n.id);
+                                                }
+                                                if (actionUrl) {
+                                                    setNotifOpen(false);
+                                                    router.visit(actionUrl);
+                                                }
+                                            }}
                                         >
                                             <div className="flex w-full items-start justify-between gap-2">
                                                 <div className="min-w-0 flex-1">
@@ -204,24 +248,16 @@ export function AppSidebarHeader({
                                                         </p>
                                                     )}
                                                 </div>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-7 px-2 text-xs"
-                                                    onClick={() => markRead(n.id)}
-                                                    disabled={!isUnread}
-                                                >
-                                                    Read
-                                                </Button>
+                                                {isUnread && (
+                                                    <span className="shrink-0 text-xs text-muted-foreground">
+                                                        Mark read
+                                                    </span>
+                                                )}
                                             </div>
                                             {actionUrl && (
-                                                <Link
-                                                    href={actionUrl}
-                                                    className="text-xs font-medium text-primary hover:underline"
-                                                    onClick={() => markRead(n.id)}
-                                                >
-                                                    View
-                                                </Link>
+                                                <span className="text-xs font-medium text-primary">
+                                                    View →
+                                                </span>
                                             )}
                                         </DropdownMenuItem>
                                     );
@@ -230,56 +266,14 @@ export function AppSidebarHeader({
                         </div>
                     </DropdownMenuContent>
                 </DropdownMenu>
-                <div className="inline-flex gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => updateAppearance('light')}
-                        className={cn(
-                            'size-8 rounded-md transition-colors',
-                            appearance === 'light'
-                                ? 'bg-white shadow-xs dark:bg-neutral-700'
-                                : 'text-neutral-500 hover:bg-neutral-200/60 hover:text-black dark:text-neutral-400 dark:hover:bg-neutral-700/60',
-                        )}
-                        aria-label="Light mode"
-                    >
-                        <Sun className="size-4" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => updateAppearance('dark')}
-                        className={cn(
-                            'size-8 rounded-md transition-colors',
-                            appearance === 'dark'
-                                ? 'bg-white shadow-xs dark:bg-neutral-700'
-                                : 'text-neutral-500 hover:bg-neutral-200/60 hover:text-black dark:text-neutral-400 dark:hover:bg-neutral-700/60',
-                        )}
-                        aria-label="Dark mode"
-                    >
-                        <Moon className="size-4" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => updateAppearance('system')}
-                        className={cn(
-                            'size-8 rounded-md transition-colors',
-                            appearance === 'system'
-                                ? 'bg-white shadow-xs dark:bg-neutral-700'
-                                : 'text-neutral-500 hover:bg-neutral-200/60 hover:text-black dark:text-neutral-400 dark:hover:bg-neutral-700/60',
-                        )}
-                        aria-label="System mode"
-                    >
-                        <Monitor className="size-4" />
-                    </Button>
-                </div>
+                <AppearanceToggle variant="icon" />
             </div>
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                     <Button
+                        type="button"
                         variant="ghost"
-                        className="size-10 rounded-full p-1"
+                        className="relative z-[60] size-10 rounded-full p-1"
                     >
                         <Avatar className="size-8 overflow-hidden rounded-full">
                             <AvatarImage

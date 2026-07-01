@@ -11,17 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('job_applications', function (Blueprint $table) {
+        Schema::create('save_jobs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('users_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('post_jobs_id')->constrained('post_jobs')->cascadeOnDelete();
-            $table->string('resume_path');
-            $table->text('description')->nullable();
-            $table->text('remarks')->nullable();
-            $table->string('status')->default('submitted');
+            $table->string('status')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
-            $table->index(['users_id', 'post_jobs_id']);
+            $table->unique(['users_id', 'post_jobs_id']);
         });
     }
 
@@ -30,7 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('job_applications');
+        Schema::dropIfExists('save_jobs');
     }
 };
-

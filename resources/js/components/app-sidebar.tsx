@@ -123,22 +123,25 @@ const employerNavGroups: NavGroup[] = [
             },
         ],
     },
+    {
+        label: 'Account setup',
+        items: [
+            {
+                title: 'Profile settings',
+                href: profileEdit().url,
+                icon: User,
+                iconClassName: 'h-5 w-5 shrink-0 text-cyan-500 transition-all duration-200 group-hover:scale-110 group-hover:rotate-6 group-hover:text-cyan-400',
+            },
+        ],
+    },
 ];
 
 export function AppSidebar() {
-    const { auth, employerProfile } = usePage().props as {
+    const { auth } = usePage().props as {
         auth: Auth;
-        employerProfile?: EmployerProfileShared;
     };
 
-    const isEmployerIncomplete =
-        auth?.user?.role === 'employer' &&
-        employerProfile &&
-        (!employerProfile.is_complete || !employerProfile.is_approved);
-
-    const navGroups = isEmployerIncomplete
-        ? employerIncompleteNavGroups
-        : auth?.user?.role === 'employer'
+    const navGroups = auth?.user?.role === 'employer'
         ? employerNavGroups
         : defaultNavGroups;
 

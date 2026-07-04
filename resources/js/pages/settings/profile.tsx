@@ -264,6 +264,20 @@ export default function Profile({
 
             <SettingsLayout>
                 <div className="space-y-6">
+                    {auth.user.role === 'employer' && (!employerInformation || employerInformation.status !== 'approved') && (
+                        <Alert className="border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 [&>svg]:text-amber-600 dark:[&>svg]:text-amber-400">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle className="font-semibold text-amber-800 dark:text-amber-300">
+                                {!employerInformation ? 'Action Required: Add Business Information' : 'Status: Pending Business Verification'}
+                            </AlertTitle>
+                            <AlertDescription className="text-amber-700/90 dark:text-amber-400/90 mt-1">
+                                {!employerInformation 
+                                    ? 'You need to add your business information and wait for admin approval before you can post jobs and access other features of the system.'
+                                    : 'Your business information is currently pending approval. Please wait for admin approval before you can post jobs and access other features of the system.'}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+
                     {/* Profile header layout */}
                     <Card>
                         <CardContent className="px-5 pt-5">

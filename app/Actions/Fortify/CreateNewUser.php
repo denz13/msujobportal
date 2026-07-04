@@ -32,7 +32,7 @@ class CreateNewUser implements CreatesNewUsers
             'email' => $input['email'],
             'password' => $input['password'],
             'role' => 'employer',
-            'status' => 'pending',
+            'status' => 'approved',
         ]);
     }
 }

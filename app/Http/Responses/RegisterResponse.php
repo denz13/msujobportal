@@ -28,7 +28,7 @@ class RegisterResponse implements RegisterResponseContract
             ? new JsonResponse(['message' => 'Registration successful. Please login.'], 201)
             : Redirect::route('login')->with('toast', [
                 'type' => 'success',
-                'message' => 'Registration successful. Please wait for admin approval before logging in.',
+                'message' => 'Registration successful.',
             ]);
     }
 }

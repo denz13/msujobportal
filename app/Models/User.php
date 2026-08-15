@@ -47,7 +47,20 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected $appends = ['display_name'];
+    protected $appends = ['display_name', 'avatar'];
+
+    /**
+     * Avatar URL attribute.
+     */
+    public function getAvatarAttribute(): ?string
+    {
+        if (!$this->photo) {
+            return null;
+        }
+        return str_starts_with($this->photo, 'http') || str_starts_with($this->photo, '/')
+            ? $this->photo
+            : '/' . $this->photo;
+    }
 
     /**
      * Get the attributes that should be cast.

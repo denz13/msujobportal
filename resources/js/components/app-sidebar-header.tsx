@@ -279,6 +279,9 @@ export function AppSidebarHeader({
                             <AvatarImage
                                 src={auth.user.avatar}
                                 alt={auth.user.display_name}
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                }}
                             />
                             <AvatarFallback className="rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
                                 {getInitials(auth.user.display_name)}

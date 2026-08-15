@@ -1,6 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Bell, Check } from 'lucide-react';
+import { Bell, Check, Trash2 } from 'lucide-react';
 import { AppearanceToggle } from '@/components/appearance-tabs';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -152,6 +152,29 @@ export function AppSidebarHeader({
         }
     };
 
+    const deleteNotification = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        e.preventDefault();
+        try {
+            const res = await fetch(`/notifications/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrf,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return;
+            setNotifItems((prev) => prev.filter((n) => n.id !== id));
+            setUnreadCount(Number(data.unread_count ?? 0));
+        } catch {
+            // ignore
+        }
+    };
+
     return (
         <header className="flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border/50 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
             <div className="flex flex-1 items-center gap-2">
@@ -220,7 +243,7 @@ export function AppSidebarHeader({
                                     return (
                                         <DropdownMenuItem
                                             key={n.id}
-                                            className="flex cursor-pointer flex-col items-start gap-1 py-2"
+                                            className="group/notif flex cursor-pointer flex-col items-start gap-1 py-2"
                                             onSelect={(e) => {
                                                 e.preventDefault();
                                                 if (isUnread) {
@@ -248,11 +271,21 @@ export function AppSidebarHeader({
                                                         </p>
                                                     )}
                                                 </div>
-                                                {isUnread && (
-                                                    <span className="shrink-0 text-xs text-muted-foreground">
-                                                        Mark read
-                                                    </span>
-                                                )}
+                                                <div className="flex shrink-0 items-center gap-1.5">
+                                                    {isUnread && (
+                                                        <span className="text-[11px] text-muted-foreground">
+                                                            Mark read
+                                                        </span>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        title="Delete notification"
+                                                        onClick={(e) => deleteNotification(e, n.id)}
+                                                        className="rounded p-1 text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive focus:outline-none"
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </div>
                                             </div>
                                             {actionUrl && (
                                                 <span className="text-xs font-medium text-primary">

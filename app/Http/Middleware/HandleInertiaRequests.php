@@ -55,7 +55,14 @@ class HandleInertiaRequests extends Middleware
         }
 
         if ($user) {
-            $unreadNotificationsCount = $user->unreadNotifications()->count();
+            $unreadQuery = $user->unreadNotifications();
+            if ($user->role === 'admin') {
+                $unreadQuery->where(function ($q) {
+                    $q->whereNull('data->meta->type')
+                      ->orWhere('data->meta->type', '!=', 'job_application_submitted');
+                });
+            }
+            $unreadNotificationsCount = $unreadQuery->count();
         }
 
         return [

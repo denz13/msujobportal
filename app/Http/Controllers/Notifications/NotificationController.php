@@ -17,7 +17,25 @@ class NotificationController extends Controller
         $limit = (int) $request->get('limit', 10);
         $limit = max(1, min($limit, 30));
 
-        $notifications = $user->notifications()
+        $query = $user->notifications();
+
+        // If the logged in user is an admin, ensure they never see applicant submission notifications intended for employers
+        if ($user->role === 'admin') {
+            $query->where(function ($q) {
+                $q->whereNull('data->meta->type')
+                  ->orWhere('data->meta->type', '!=', 'job_application_submitted');
+            });
+        }
+
+        $unreadCountQuery = $user->unreadNotifications();
+        if ($user->role === 'admin') {
+            $unreadCountQuery->where(function ($q) {
+                $q->whereNull('data->meta->type')
+                  ->orWhere('data->meta->type', '!=', 'job_application_submitted');
+            });
+        }
+
+        $notifications = $query
             ->latest()
             ->limit($limit)
             ->get()
@@ -33,7 +51,7 @@ class NotificationController extends Controller
             ->all();
 
         return response()->json([
-            'unread_count' => $user->unreadNotifications()->count(),
+            'unread_count' => $unreadCountQuery->count(),
             'notifications' => $notifications,
         ]);
     }
@@ -63,6 +81,29 @@ class NotificationController extends Controller
         return response()->json([
             'message' => 'All notifications marked as read.',
             'unread_count' => 0,
+        ]);
+    }
+
+    public function destroy(Request $request, string $id): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user, 401);
+
+        /** @var DatabaseNotification $notification */
+        $notification = $user->notifications()->whereKey($id)->firstOrFail();
+        $notification->delete();
+
+        $unreadQuery = $user->unreadNotifications();
+        if ($user->role === 'admin') {
+            $unreadQuery->where(function ($q) {
+                $q->whereNull('data->meta->type')
+                  ->orWhere('data->meta->type', '!=', 'job_application_submitted');
+            });
+        }
+
+        return response()->json([
+            'message' => 'Notification deleted.',
+            'unread_count' => $unreadQuery->count(),
         ]);
     }
 }

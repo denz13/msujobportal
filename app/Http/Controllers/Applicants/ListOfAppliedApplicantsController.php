@@ -142,16 +142,27 @@ class ListOfAppliedApplicantsController extends Controller
 
         $applicant = $application->user;
         if ($applicant) {
-            $applicant->notify(new SystemNotification(
-                'Application approved',
-                sprintf(
-                    'Your application for "%s" has been approved by the employer.',
-                    $application->job?->job_title ?? 'the job'
-                ),
-                '/applications', // or a route to jobseeker's applications if exists
-                'success',
-                ['application_id' => $application->id]
-            ));
+            try {
+                $applicant->notify(new SystemNotification(
+                    title: 'Application approved',
+                    message: sprintf(
+                        'Your application for "%s" has been approved by the employer.',
+                        $application->job?->job_title ?? 'the job'
+                    ),
+                    actionUrl: '/applications',
+                    level: 'success',
+                    meta: [
+                        'type' => 'job_application_status_updated',
+                        'status' => 'approved',
+                        'application_id' => $application->id,
+                        'post_jobs_id' => $application->post_jobs_id,
+                        'job_title' => $application->job?->job_title,
+                        'employer_id' => $user->id,
+                    ],
+                ));
+            } catch (\Throwable $e) {
+                // Ignore notification failure
+            }
         }
 
         return redirect()->route('list-of-applied-applicants.index')
@@ -189,13 +200,25 @@ class ListOfAppliedApplicantsController extends Controller
             if (! empty(trim($validated['remarks'] ?? ''))) {
                 $message .= ' Remarks: ' . trim($validated['remarks']);
             }
-            $applicant->notify(new SystemNotification(
-                'Application declined',
-                $message,
-                '/applications',
-                'warning',
-                ['application_id' => $application->id]
-            ));
+            try {
+                $applicant->notify(new SystemNotification(
+                    title: 'Application declined',
+                    message: $message,
+                    actionUrl: '/applications',
+                    level: 'warning',
+                    meta: [
+                        'type' => 'job_application_status_updated',
+                        'status' => 'declined',
+                        'application_id' => $application->id,
+                        'post_jobs_id' => $application->post_jobs_id,
+                        'job_title' => $application->job?->job_title,
+                        'employer_id' => $user->id,
+                        'remarks' => $validated['remarks'] ?? null,
+                    ],
+                ));
+            } catch (\Throwable $e) {
+                // Ignore notification failure
+            }
         }
 
         return redirect()->route('list-of-applied-applicants.index')

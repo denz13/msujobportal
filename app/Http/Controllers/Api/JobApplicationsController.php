@@ -193,7 +193,7 @@ class JobApplicationsController extends Controller
         // Notify the employer (job poster).
         $employerId = (int) ($job->user_id ?? 0);
         if ($employerId > 0 && $employerId !== (int) $user->id) {
-            $employer = User::query()->find($employerId);
+            $employer = User::query()->where('role', 'employer')->find($employerId);
             if ($employer) {
                 try {
                     $employer->notify(new SystemNotification(

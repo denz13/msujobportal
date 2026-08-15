@@ -297,6 +297,9 @@ export default function Profile({
                                                             : undefined)
                                                     }
                                                     alt={displayName}
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).style.display = 'none';
+                                                    }}
                                                 />
                                                 <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
                                                     {initials || 'U'}

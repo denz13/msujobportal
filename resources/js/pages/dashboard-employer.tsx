@@ -74,28 +74,28 @@ export default function DashboardEmployer() {
             iconClassName: 'text-primary',
         },
         {
-            label: 'Pending',
+            label: 'Pending jobs',
             value: stats?.pending ?? 0,
             icon: Clock,
             className: 'border-amber-200 dark:border-amber-900/50 bg-amber-50/80 dark:bg-amber-950/30',
             iconClassName: 'text-amber-600 dark:text-amber-400',
         },
         {
-            label: 'Approved',
+            label: 'Approved jobs',
             value: stats?.approved ?? 0,
             icon: CheckCircle2,
             className: 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/80 dark:bg-emerald-950/30',
             iconClassName: 'text-emerald-600 dark:text-emerald-400',
         },
         {
-            label: 'Active',
+            label: 'Active jobs',
             value: stats?.active ?? 0,
             icon: TrendingUp,
             className: 'border-blue-200 dark:border-blue-900/50 bg-blue-50/80 dark:bg-blue-950/30',
             iconClassName: 'text-blue-600 dark:text-blue-400',
         },
         {
-            label: 'Declined',
+            label: 'Declined jobs',
             value: stats?.declined ?? 0,
             icon: FileX2,
             className: 'border-red-200 dark:border-red-900/50 bg-red-50/80 dark:bg-red-950/30',
@@ -128,8 +128,9 @@ export default function DashboardEmployer() {
         totalApplicationCard,
         ...statusEntries.map(([status, count]) => {
             const style = getStatusStyle(status);
+            const formattedStatus = status ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase() : 'Unknown';
             return {
-                label: status ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase() : 'Unknown',
+                label: `${formattedStatus} applicants`,
                 value: count,
                 icon: style.icon,
                 href: undefined as string | undefined,

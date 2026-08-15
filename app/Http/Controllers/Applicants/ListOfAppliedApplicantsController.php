@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Applicants;
 
 use App\Http\Controllers\Controller;
 use App\Models\job_applications;
+use App\Models\User;
 use App\Notifications\SystemNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -140,7 +142,7 @@ class ListOfAppliedApplicantsController extends Controller
 
         $application->update(['status' => 'approved']);
 
-        $applicant = $application->user;
+        $applicant = $application->user ?: User::find($application->users_id);
         if ($applicant) {
             try {
                 $applicant->notify(new SystemNotification(
@@ -161,7 +163,11 @@ class ListOfAppliedApplicantsController extends Controller
                     ],
                 ));
             } catch (\Throwable $e) {
-                // Ignore notification failure
+                Log::error('Failed to send application approved notification: ' . $e->getMessage(), [
+                    'exception' => $e,
+                    'application_id' => $application->id,
+                    'applicant_id' => $applicant->id,
+                ]);
             }
         }
 
@@ -191,7 +197,7 @@ class ListOfAppliedApplicantsController extends Controller
             'remarks' => $validated['remarks'] ?? null,
         ]);
 
-        $applicant = $application->user;
+        $applicant = $application->user ?: User::find($application->users_id);
         if ($applicant) {
             $message = sprintf(
                 'Your application for "%s" has been declined.',
@@ -217,7 +223,11 @@ class ListOfAppliedApplicantsController extends Controller
                     ],
                 ));
             } catch (\Throwable $e) {
-                // Ignore notification failure
+                Log::error('Failed to send application declined notification: ' . $e->getMessage(), [
+                    'exception' => $e,
+                    'application_id' => $application->id,
+                    'applicant_id' => $applicant->id,
+                ]);
             }
         }
 

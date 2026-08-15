@@ -107,7 +107,8 @@ export default function ListRequestJobsPost() {
 
     const photoUrl = (photo: string | null) => {
         if (!photo) return undefined;
-        return photo.startsWith('http') || photo.startsWith('/') ? photo : `/${photo}`;
+        let cleanPath = photo.replace(/(?:uploads\/jobs\/)+jobs\//g, 'uploads/jobs/').replace(/\/+/g, '/');
+        return cleanPath.startsWith('http') || cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
     };
 
     const csrf = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';

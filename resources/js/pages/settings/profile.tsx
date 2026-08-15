@@ -213,6 +213,7 @@ export default function Profile({
             forceFormData: true,
             onSuccess: () => {
                 setPendingPhotoFile(null);
+                setAvatarPreview(null);
                 toast.success('Photo updated successfully');
             },
             onError: (errors) => {

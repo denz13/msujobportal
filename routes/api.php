@@ -1,8 +1,9 @@
-<?php
+﻿<?php
 
 use App\Http\Controllers\Api\DatabaseBrowserController;
 use App\Http\Controllers\Api\ApprovedJobsController;
 use App\Http\Controllers\Api\JobApplicationsController;
+use App\Http\Controllers\Api\NotificationsController;
 use App\Http\Controllers\Api\SaveJobsController;
 use App\Http\Controllers\Api\JobseekerLoginController;
 use App\Http\Controllers\Api\JobseekerProfileController;
@@ -23,9 +24,14 @@ Route::get('jobs/applications/count', [JobApplicationsController::class, 'count'
 Route::post('jobs/applications/{application}/cancel', [JobApplicationsController::class, 'cancel']);
 Route::post('jobs/{job}/apply', [JobApplicationsController::class, 'store']);
 
+// Mobile notifications routes
+Route::get('notifications', [NotificationsController::class, 'index']);
+Route::post('notifications/{id}/read', [NotificationsController::class, 'markAsRead']);
+Route::post('notifications/read-all', [NotificationsController::class, 'markAllAsRead']);
+Route::delete('notifications/{id}', [NotificationsController::class, 'destroy']);
+
 Route::prefix('db')->group(function () {
     Route::get('tables', [DatabaseBrowserController::class, 'tables']);
     Route::get('tables/{table}/columns', [DatabaseBrowserController::class, 'columns']);
     Route::get('tables/{table}/rows', [DatabaseBrowserController::class, 'rows']);
 });
-

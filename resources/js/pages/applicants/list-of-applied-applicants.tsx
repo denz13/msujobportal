@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle2, FileText, MoreVertical, Search, User, UserCircle, XCircle } from 'lucide-react';
+import { CheckCircle2, Download, FileText, MoreVertical, Search, User, UserCircle, XCircle } from 'lucide-react';
 import { type ChangeEvent, type ReactNode, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -416,17 +416,38 @@ export default function ListOfAppliedApplicants({
                 </Card>
 
                 <Dialog open={resumeModalOpen} onOpenChange={(open) => { setResumeModalOpen(open); if (!open) setResumeUrl(null); }}>
-                    <DialogContent className="max-h-[90vh] !max-w-[calc(100%-2rem)] sm:!max-w-6xl gap-0 p-0">
+                    <DialogContent className="max-h-[90vh] !max-w-[calc(100%-2rem)] sm:!max-w-4xl gap-0 p-0">
                         <DialogHeader className="border-b border-border px-4 py-3">
                             <DialogTitle className="text-lg">Resume</DialogTitle>
+                            <DialogDescription className="sr-only">Resume preview or download options</DialogDescription>
                         </DialogHeader>
-                        <div className="min-h-[70vh] w-full">
+                        <div className="flex min-h-[50vh] w-full items-center justify-center p-4">
                             {resumeUrl && (
-                                <iframe
-                                    title="Resume"
-                                    src={resumeUrl}
-                                    className="h-[70vh] w-full border-0"
-                                />
+                                resumeUrl.match(/\.(docx?|doc)$/i) ? (
+                                    <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
+                                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                            <FileText className="h-8 w-8" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h3 className="font-semibold text-lg">Word Document (.docx)</h3>
+                                            <p className="text-sm text-muted-foreground max-w-sm">
+                                                Direct browser preview is not supported for Word documents. You can download the file to view it.
+                                            </p>
+                                        </div>
+                                        <Button asChild className="gap-2">
+                                            <a href={resumeUrl} download target="_blank" rel="noopener noreferrer">
+                                                <Download className="h-4 w-4" />
+                                                Download Resume
+                                            </a>
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <iframe
+                                        title="Resume"
+                                        src={resumeUrl}
+                                        className="h-[70vh] w-full border-0 rounded-b-lg"
+                                    />
+                                )
                             )}
                         </div>
                     </DialogContent>
@@ -442,6 +463,7 @@ export default function ListOfAppliedApplicants({
                     <DialogContent className="max-h-[90vh] overflow-y-auto scrollbar-hide sm:max-w-lg">
                         <DialogHeader>
                             <DialogTitle className="text-lg">Jobseeker profile</DialogTitle>
+                            <DialogDescription className="sr-only">Detailed profile information of the jobseeker</DialogDescription>
                         </DialogHeader>
                         {selectedApplicant && (
                             <div className="space-y-6 py-2">

@@ -384,6 +384,12 @@ export default function PostJobs() {
                                                                     src={photoUrl(job.photo) ?? ''}
                                                                     alt=""
                                                                     className="h-full w-full object-cover"
+                                                                    onError={(e) => {
+                                                                        (e.target as HTMLImageElement).style.display = 'none';
+                                                                        if (e.currentTarget.parentElement) {
+                                                                            e.currentTarget.parentElement.innerHTML = '<svg class="h-5 w-5 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg>';
+                                                                        }
+                                                                    }}
                                                                 />
                                                             ) : (
                                                                 <Briefcase className="h-5 w-5 text-muted-foreground" />
@@ -497,6 +503,12 @@ export default function PostJobs() {
                                                 src={photoUrl(detailsJob.photo) ?? ''}
                                                 alt=""
                                                 className="h-full w-full object-cover"
+                                                onError={(e) => {
+                                                     (e.target as HTMLImageElement).style.display = 'none';
+                                                     if (e.currentTarget.parentElement) {
+                                                         e.currentTarget.parentElement.innerHTML = '<div class="flex h-full w-full items-center justify-center"><svg class="h-10 w-10 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg></div>';
+                                                     }
+                                                 }}
                                             />
                                         ) : (
                                             <div className="flex h-full w-full items-center justify-center">

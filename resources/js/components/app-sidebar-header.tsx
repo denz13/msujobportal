@@ -1,11 +1,20 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Bell, Check, Trash2 } from 'lucide-react';
+import { Bell, Check, Trash2, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 import { AppearanceToggle } from '@/components/appearance-tabs';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -152,11 +161,20 @@ export function AppSidebarHeader({
         }
     };
 
-    const deleteNotification = async (e: React.MouseEvent, id: string) => {
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const openDeleteConfirm = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         e.preventDefault();
+        setDeleteConfirmId(id);
+    };
+
+    const confirmDeleteNotification = async () => {
+        if (!deleteConfirmId) return;
+        setIsDeleting(true);
         try {
-            const res = await fetch(`/notifications/${id}`, {
+            const res = await fetch(`/notifications/${deleteConfirmId}`, {
                 method: 'DELETE',
                 headers: {
                     Accept: 'application/json',
@@ -167,11 +185,18 @@ export function AppSidebarHeader({
                 credentials: 'same-origin',
             });
             const data = await res.json().catch(() => ({}));
-            if (!res.ok) return;
-            setNotifItems((prev) => prev.filter((n) => n.id !== id));
+            if (!res.ok) {
+                toast.error(data?.message || 'Failed to delete notification.');
+                return;
+            }
+            setNotifItems((prev) => prev.filter((n) => n.id !== deleteConfirmId));
             setUnreadCount(Number(data.unread_count ?? 0));
+            toast.success('Notification deleted successfully.');
+            setDeleteConfirmId(null);
         } catch {
-            // ignore
+            toast.error('An error occurred while deleting the notification.');
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -280,7 +305,7 @@ export function AppSidebarHeader({
                                                     <button
                                                         type="button"
                                                         title="Delete notification"
-                                                        onClick={(e) => deleteNotification(e, n.id)}
+                                                        onClick={(e) => openDeleteConfirm(e, n.id)}
                                                         className="rounded p-1 text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive focus:outline-none"
                                                     >
                                                         <Trash2 className="h-3.5 w-3.5" />
@@ -326,6 +351,39 @@ export function AppSidebarHeader({
                     <UserMenuContent user={auth.user} />
                 </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Delete Notification Confirmation Modal */}
+            <Dialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+                                <AlertTriangle className="h-5 w-5 text-destructive" />
+                            </div>
+                            <DialogTitle>Delete Notification</DialogTitle>
+                        </div>
+                        <DialogDescription className="pt-2">
+                            Are you sure you want to delete this notification? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button
+                            variant="outline"
+                            onClick={() => setDeleteConfirmId(null)}
+                            disabled={isDeleting}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={confirmDeleteNotification}
+                            disabled={isDeleting}
+                        >
+                            {isDeleting ? 'Deleting…' : 'Delete'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </header>
     );
 }

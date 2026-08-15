@@ -2,7 +2,7 @@ import { Transition } from '@headlessui/react';
 import { Form, Head, Link, usePage, router } from '@inertiajs/react';
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
-import { Mail, MapPin, Phone, User2, Upload, Camera, FileText, AlertTriangle, Info } from 'lucide-react';
+import { Mail, MapPin, Phone, User2, Upload, Camera, FileText, AlertTriangle, Info, Eye, EyeOff } from 'lucide-react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -81,10 +81,15 @@ export default function Profile({
     const businessPermitInputRef = useRef<HTMLInputElement>(null);
     const passwordInputRef = useRef<HTMLInputElement>(null);
     const currentPasswordInputRef = useRef<HTMLInputElement>(null);
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [showPhotoConfirmDialog, setShowPhotoConfirmDialog] = useState(false);
     const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
     const formSuccessShown = useRef(false);
     const formErrorShown = useRef(false);
+    const passwordSuccessShown = useRef(false);
+    const passwordErrorShown = useRef(false);
 
     const displayName =
         auth.user.display_name ??
@@ -461,14 +466,15 @@ export default function Profile({
                         </CardContent>
                     </Card>
 
-                    <Form
-                        {...ProfileController.update.form()}
-                        data-profile-form
-                        options={{
-                            preserveScroll: true,
-                        }}
-                        className="space-y-6"
-                    >
+                    {activeTab !== 'password' && (
+                        <Form
+                            {...ProfileController.update.form()}
+                            data-profile-form
+                            options={{
+                                preserveScroll: true,
+                            }}
+                            className="space-y-6"
+                        >
                         {({ processing, recentlySuccessful, errors }) => {
                             // Check if flash toast was already shown (prevents duplicate toasts)
                             const flashToastShown = flash?.toast && toastShown.current === flash.toast.message;
@@ -954,153 +960,227 @@ export default function Profile({
                                             </div>
                                         </div>
                                     )}
+                                <div className="flex items-center gap-4">
+                                    <Button
+                                        disabled={
+                                            processing ||
+                                            (activeTab === 'business' &&
+                                                (employerInformation?.status === 'pending' ||
+                                                    employerInformation?.status === 'approved'))
+                                        }
+                                        data-test="update-profile-button"
+                                    >
+                                        Save
+                                    </Button>
 
-                                {activeTab === 'password' && (
-                                    <div className="space-y-6">
-                                        <Heading
-                                            variant="small"
-                                            title="Update password"
-                                            description="Ensure your account is using a long, random password to stay secure"
-                                        />
-
-                                        <Form
-                                            {...PasswordController.update.form()}
-                                            options={{
-                                                preserveScroll: true,
-                                            }}
-                                            resetOnError={[
-                                                'password',
-                                                'password_confirmation',
-                                                'current_password',
-                                            ]}
-                                            resetOnSuccess
-                                            onError={(errors) => {
-                                                if (errors.password) {
-                                                    passwordInputRef.current?.focus();
-                                                }
-
-                                                if (errors.current_password) {
-                                                    currentPasswordInputRef.current?.focus();
-                                                }
-                                            }}
-                                            className="space-y-6"
-                                        >
-                                            {({ errors, processing, recentlySuccessful }) => (
-                                                <>
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="current_password">
-                                                            Current password
-                                                        </Label>
-
-                                                        <Input
-                                                            id="current_password"
-                                                            ref={currentPasswordInputRef}
-                                                            name="current_password"
-                                                            type="password"
-                                                            className="mt-1 block w-full"
-                                                            autoComplete="current-password"
-                                                            placeholder="Current password"
-                                                        />
-
-                                                        <InputError
-                                                            message={errors.current_password}
-                                                        />
-                                                    </div>
-
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="password">
-                                                            New password
-                                                        </Label>
-
-                                                        <Input
-                                                            id="password"
-                                                            ref={passwordInputRef}
-                                                            name="password"
-                                                            type="password"
-                                                            className="mt-1 block w-full"
-                                                            autoComplete="new-password"
-                                                            placeholder="New password"
-                                                        />
-
-                                                        <InputError message={errors.password} />
-                                                    </div>
-
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="password_confirmation">
-                                                            Confirm password
-                                                        </Label>
-
-                                                        <Input
-                                                            id="password_confirmation"
-                                                            name="password_confirmation"
-                                                            type="password"
-                                                            className="mt-1 block w-full"
-                                                            autoComplete="new-password"
-                                                            placeholder="Confirm password"
-                                                        />
-
-                                                        <InputError
-                                                            message={errors.password_confirmation}
-                                                        />
-                                                    </div>
-
-                                                    <div className="flex items-center gap-4">
-                                                        <Button
-                                                            disabled={processing}
-                                                            data-test="update-password-button"
-                                                        >
-                                                            Save password
-                                                        </Button>
-
-                                                        <Transition
-                                                            show={recentlySuccessful}
-                                                            enter="transition ease-in-out"
-                                                            enterFrom="opacity-0"
-                                                            leave="transition ease-in-out"
-                                                            leaveTo="opacity-0"
-                                                        >
-                                                            <p className="text-sm text-neutral-600">
-                                                                Saved
-                                                            </p>
-                                                        </Transition>
-                                                    </div>
-                                                </>
-                                            )}
-                                        </Form>
-                                    </div>
-                                )}
-
-                                {activeTab !== 'password' && (
-                                    <div className="flex items-center gap-4">
-                                        <Button
-                                            disabled={
-                                                processing ||
-                                                (activeTab === 'business' &&
-                                                    (employerInformation?.status === 'pending' ||
-                                                        employerInformation?.status === 'approved'))
-                                            }
-                                            data-test="update-profile-button"
-                                        >
-                                            Save
-                                        </Button>
-
-                                        <Transition
-                                            show={recentlySuccessful}
-                                            enter="transition ease-in-out"
-                                            enterFrom="opacity-0"
-                                            leave="transition ease-in-out"
-                                            leaveTo="opacity-0"
-                                        >
-                                            <p className="text-sm text-neutral-600">
-                                                Saved
-                                            </p>
-                                        </Transition>
-                                    </div>
-                                )}
+                                    <Transition
+                                        show={recentlySuccessful}
+                                        enter="transition ease-in-out"
+                                        enterFrom="opacity-0"
+                                        leave="transition ease-in-out"
+                                        leaveTo="opacity-0"
+                                    >
+                                        <p className="text-sm text-neutral-600">
+                                            Saved
+                                        </p>
+                                    </Transition>
+                                </div>
                             </>
                             );
                         }}
                     </Form>
+                    )}
+
+                    {activeTab === 'password' && (
+                        <div className="space-y-6">
+                            <Heading
+                                variant="small"
+                                title="Update password"
+                                description="Ensure your account is using a long, random password to stay secure"
+                            />
+
+                            <Form
+                                {...PasswordController.update.form()}
+                                options={{
+                                    preserveScroll: true,
+                                }}
+                                resetOnError={[
+                                    'password',
+                                    'password_confirmation',
+                                    'current_password',
+                                ]}
+                                resetOnSuccess
+                                onError={(errors) => {
+                                    if (errors.password) {
+                                        passwordInputRef.current?.focus();
+                                    }
+
+                                    if (errors.current_password) {
+                                        currentPasswordInputRef.current?.focus();
+                                    }
+                                }}
+                                className="space-y-6"
+                            >
+                                {({ errors, processing, recentlySuccessful }) => {
+                                    // Show toast on successful password update
+                                    if (recentlySuccessful && !passwordSuccessShown.current) {
+                                        passwordSuccessShown.current = true;
+                                        passwordErrorShown.current = false;
+                                        toast.success('Password updated successfully');
+                                        setTimeout(() => {
+                                            passwordSuccessShown.current = false;
+                                        }, 1000);
+                                    }
+
+                                    // Show toast on password errors
+                                    if (
+                                        Object.keys(errors).length > 0 &&
+                                        !passwordErrorShown.current &&
+                                        !recentlySuccessful
+                                    ) {
+                                        passwordErrorShown.current = true;
+                                        const firstError = Object.values(errors).find(
+                                            (v) => typeof v === 'string',
+                                        );
+                                        toast.error(
+                                            firstError ||
+                                                'Failed to update password. Please check the form.',
+                                        );
+                                        setTimeout(() => {
+                                            passwordErrorShown.current = false;
+                                        }, 1000);
+                                    }
+
+                                    return (
+                                        <>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="current_password">
+                                                Current password
+                                            </Label>
+
+                                            <div className="relative mt-1">
+                                                <Input
+                                                    id="current_password"
+                                                    ref={currentPasswordInputRef}
+                                                    name="current_password"
+                                                    type={showCurrentPassword ? 'text' : 'password'}
+                                                    className="block w-full pr-10"
+                                                    autoComplete="current-password"
+                                                    placeholder="Current password"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowCurrentPassword((prev) => !prev)}
+                                                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground focus:outline-none"
+                                                    tabIndex={-1}
+                                                    aria-label={showCurrentPassword ? 'Hide current password' : 'Show current password'}
+                                                >
+                                                    {showCurrentPassword ? (
+                                                        <EyeOff className="h-4 w-4" />
+                                                    ) : (
+                                                        <Eye className="h-4 w-4" />
+                                                    )}
+                                                </button>
+                                            </div>
+
+                                            <InputError
+                                                message={errors.current_password}
+                                            />
+                                        </div>
+
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="password">
+                                                New password
+                                            </Label>
+
+                                            <div className="relative mt-1">
+                                                <Input
+                                                    id="password"
+                                                    ref={passwordInputRef}
+                                                    name="password"
+                                                    type={showPassword ? 'text' : 'password'}
+                                                    className="block w-full pr-10"
+                                                    autoComplete="new-password"
+                                                    placeholder="New password"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword((prev) => !prev)}
+                                                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground focus:outline-none"
+                                                    tabIndex={-1}
+                                                    aria-label={showPassword ? 'Hide new password' : 'Show new password'}
+                                                >
+                                                    {showPassword ? (
+                                                        <EyeOff className="h-4 w-4" />
+                                                    ) : (
+                                                        <Eye className="h-4 w-4" />
+                                                    )}
+                                                </button>
+                                            </div>
+
+                                            <InputError message={errors.password} />
+                                        </div>
+
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="password_confirmation">
+                                                Confirm password
+                                            </Label>
+
+                                            <div className="relative mt-1">
+                                                <Input
+                                                    id="password_confirmation"
+                                                    name="password_confirmation"
+                                                    type={showConfirmPassword ? 'text' : 'password'}
+                                                    className="block w-full pr-10"
+                                                    autoComplete="new-password"
+                                                    placeholder="Confirm password"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                                                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground focus:outline-none"
+                                                    tabIndex={-1}
+                                                    aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                                                >
+                                                    {showConfirmPassword ? (
+                                                        <EyeOff className="h-4 w-4" />
+                                                    ) : (
+                                                        <Eye className="h-4 w-4" />
+                                                    )}
+                                                </button>
+                                            </div>
+
+                                            <InputError
+                                                message={errors.password_confirmation}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <Button
+                                                disabled={processing}
+                                                data-test="update-password-button"
+                                            >
+                                                Save password
+                                            </Button>
+
+                                            <Transition
+                                                show={recentlySuccessful}
+                                                enter="transition ease-in-out"
+                                                enterFrom="opacity-0"
+                                                leave="transition ease-in-out"
+                                                leaveTo="opacity-0"
+                                            >
+                                                <p className="text-sm text-neutral-600">
+                                                    Saved
+                                                </p>
+                                            </Transition>
+                                        </div>
+                                    </>
+                                    );
+                                }}
+                            </Form>
+                        </div>
+                    )}
                 </div>
 
                 {/* Photo upload confirmation dialog */}

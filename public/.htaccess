@@ -18,6 +18,15 @@
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
+    # Direct static uploads & build folder access if requested from parent root
+    RewriteCond %{REQUEST_URI} ^/uploads/
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
+    RewriteRule ^uploads/(.*)$ public/uploads/$1 [L]
+
+    RewriteCond %{REQUEST_URI} ^/build/
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
+    RewriteRule ^build/(.*)$ public/build/$1 [L]
+
     # Send Requests To Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f

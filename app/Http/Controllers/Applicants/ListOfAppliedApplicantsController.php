@@ -21,7 +21,7 @@ class ListOfAppliedApplicantsController extends Controller
     public function index(Request $request): Response
     {
         $user = Auth::user();
-        if (! $user || $user->role !== 'employer') {
+        if (! $user || ! in_array($user->role, ['employer', 'admin'], true)) {
             return Inertia::render('applicants/list-of-applied-applicants', [
                 'applicants' => [],
                 'pagination' => [
@@ -40,8 +40,11 @@ class ListOfAppliedApplicantsController extends Controller
         $search = $request->get('search', '');
         $status = $request->get('status', 'all');
 
-        $baseQuery = job_applications::query()
-            ->whereHas('job', fn ($q) => $q->where('user_id', $user->id));
+        $baseQuery = job_applications::query();
+
+        if ($user->role === 'employer') {
+            $baseQuery->whereHas('job', fn ($q) => $q->where('user_id', $user->id));
+        }
 
         if ($status !== 'all' && $status !== '') {
             $baseQuery->where('status', $status);
@@ -54,8 +57,12 @@ class ListOfAppliedApplicantsController extends Controller
             });
         }
 
-        $uniqueStatuses = job_applications::query()
-            ->whereHas('job', fn ($q) => $q->where('user_id', $user->id))
+        $uniqueStatusesQuery = job_applications::query();
+        if ($user->role === 'employer') {
+            $uniqueStatusesQuery->whereHas('job', fn ($q) => $q->where('user_id', $user->id));
+        }
+
+        $uniqueStatuses = $uniqueStatusesQuery
             ->whereNotNull('status')
             ->where('status', '!=', '')
             ->distinct()
@@ -131,13 +138,16 @@ class ListOfAppliedApplicantsController extends Controller
     public function approve(Request $request, int $id): RedirectResponse
     {
         $user = Auth::user();
-        if (! $user || $user->role !== 'employer') {
+        if (! $user || ! in_array($user->role, ['employer', 'admin'], true)) {
             abort(403);
         }
 
-        $application = job_applications::query()
-            ->whereHas('job', fn ($q) => $q->where('user_id', $user->id))
-            ->with(['user', 'job:id,job_title'])
+        $query = job_applications::query();
+        if ($user->role === 'employer') {
+            $query->whereHas('job', fn ($q) => $q->where('user_id', $user->id));
+        }
+
+        $application = $query->with(['user', 'job:id,job_title'])
             ->findOrFail($id);
 
         $application->update(['status' => 'approved']);
@@ -148,7 +158,7 @@ class ListOfAppliedApplicantsController extends Controller
                 $applicant->notify(new SystemNotification(
                     title: 'Application approved',
                     message: sprintf(
-                        'Your application for "%s" has been approved by the employer.',
+                        'Your application for "%s" has been approved.',
                         $application->job?->job_title ?? 'the job'
                     ),
                     actionUrl: '/applications',
@@ -159,7 +169,7 @@ class ListOfAppliedApplicantsController extends Controller
                         'application_id' => $application->id,
                         'post_jobs_id' => $application->post_jobs_id,
                         'job_title' => $application->job?->job_title,
-                        'employer_id' => $user->id,
+                        'employer_id' => $application->job?->user_id ?? $user->id,
                     ],
                 ));
             } catch (\Throwable $e) {
@@ -181,15 +191,18 @@ class ListOfAppliedApplicantsController extends Controller
     public function decline(Request $request, int $id): RedirectResponse
     {
         $user = Auth::user();
-        if (! $user || $user->role !== 'employer') {
+        if (! $user || ! in_array($user->role, ['employer', 'admin'], true)) {
             abort(403);
         }
 
         $validated = $request->validate(['remarks' => 'nullable|string|max:1000']);
 
-        $application = job_applications::query()
-            ->whereHas('job', fn ($q) => $q->where('user_id', $user->id))
-            ->with(['user', 'job:id,job_title'])
+        $query = job_applications::query();
+        if ($user->role === 'employer') {
+            $query->whereHas('job', fn ($q) => $q->where('user_id', $user->id));
+        }
+
+        $application = $query->with(['user', 'job:id,job_title'])
             ->findOrFail($id);
 
         $application->update([
@@ -218,7 +231,7 @@ class ListOfAppliedApplicantsController extends Controller
                         'application_id' => $application->id,
                         'post_jobs_id' => $application->post_jobs_id,
                         'job_title' => $application->job?->job_title,
-                        'employer_id' => $user->id,
+                        'employer_id' => $application->job?->user_id ?? $user->id,
                         'remarks' => $validated['remarks'] ?? null,
                     ],
                 ));

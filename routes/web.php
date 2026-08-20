@@ -140,6 +140,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('user-management/employer-account/{user}/edit', [EmployerAccountController::class, 'edit'])->name('employer-account.edit');
     Route::put('user-management/employer-account/{user}', [EmployerAccountController::class, 'update'])->name('employer-account.update');
     Route::delete('user-management/employer-account/{user}', [EmployerAccountController::class, 'destroy'])->name('employer-account.destroy');
+
+    Route::get('admin/logs', [\App\Http\Controllers\Admin\LogsController::class, 'index'])->name('admin.logs.index');
 });
 
 require __DIR__.'/settings.php';

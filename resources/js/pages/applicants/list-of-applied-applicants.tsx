@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle2, Download, FileText, MoreVertical, Search, User, UserCircle, XCircle } from 'lucide-react';
+import { CheckCircle2, Download, FileText, Loader2, Mail, MoreVertical, Search, User, UserCircle, XCircle } from 'lucide-react';
 import { type ChangeEvent, type ReactNode, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -136,6 +136,8 @@ export default function ListOfAppliedApplicants({
     const [approveConfirm, setApproveConfirm] = useState<ApplicantItem | null>(null);
     const [declineConfirm, setDeclineConfirm] = useState<ApplicantItem | null>(null);
     const [declineRemarks, setDeclineRemarks] = useState('');
+    const [isProcessingApprove, setIsProcessingApprove] = useState(false);
+    const [isProcessingDecline, setIsProcessingDecline] = useState(false);
     const [searchQuery, setSearchQuery] = useState(filters.search ?? '');
     const [statusFilter, setStatusFilter] = useState(filters.status ?? 'all');
     const isInitialMount = useRef(true);
@@ -169,26 +171,34 @@ export default function ListOfAppliedApplicants({
     }
 
     function handleApproveConfirm() {
-        if (!approveConfirm) return;
+        if (!approveConfirm || isProcessingApprove) return;
         const id = approveConfirm.id;
-        setApproveConfirm(null);
+        setIsProcessingApprove(true);
         router.patch(`/applicants/list-of-applied-applicants/${id}/approve`, {}, {
             preserveScroll: true,
-            onSuccess: () => toast.success('Application approved. Applicant has been notified.'),
+            onSuccess: () => {
+                toast.success('Application approved. Email notification sent!');
+                setApproveConfirm(null);
+            },
             onError: () => toast.error('Failed to approve application.'),
+            onFinish: () => setIsProcessingApprove(false),
         });
     }
 
     function handleDeclineConfirm() {
-        if (!declineConfirm) return;
+        if (!declineConfirm || isProcessingDecline) return;
         const id = declineConfirm.id;
         const remarks = declineRemarks.trim() || undefined;
-        setDeclineConfirm(null);
-        setDeclineRemarks('');
+        setIsProcessingDecline(true);
         router.patch(`/applicants/list-of-applied-applicants/${id}/decline`, { remarks }, {
             preserveScroll: true,
-            onSuccess: () => toast.success('Application declined. Applicant has been notified.'),
+            onSuccess: () => {
+                toast.success('Application declined. Email notification sent!');
+                setDeclineConfirm(null);
+                setDeclineRemarks('');
+            },
             onError: () => toast.error('Failed to decline application.'),
+            onFinish: () => setIsProcessingDecline(false),
         });
     }
 
@@ -570,31 +580,51 @@ export default function ListOfAppliedApplicants({
                     </DialogContent>
                 </Dialog>
 
-                <Dialog open={!!approveConfirm} onOpenChange={(open) => !open && setApproveConfirm(null)}>
+                <Dialog open={!!approveConfirm} onOpenChange={(open) => { if (!open && !isProcessingApprove) setApproveConfirm(null); }}>
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>Approve application</DialogTitle>
                             <DialogDescription>
-                                Are you sure you want to approve this application? The applicant will be notified.
+                                Are you sure you want to approve this application? An approval notification email will be automatically sent to the applicant.
                             </DialogDescription>
                         </DialogHeader>
+                        {isProcessingApprove && (
+                            <div className="flex items-center gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                <Loader2 className="h-4 w-4 animate-spin text-emerald-600 dark:text-emerald-400" />
+                                <span>Sending approval email to applicant...</span>
+                            </div>
+                        )}
                         <DialogFooter>
-                            <Button variant="outline" onClick={() => setApproveConfirm(null)}>
+                            <Button variant="outline" disabled={isProcessingApprove} onClick={() => setApproveConfirm(null)}>
                                 Cancel
                             </Button>
-                            <Button onClick={handleApproveConfirm} className="bg-emerald-600 hover:bg-emerald-700">
-                                Approve
+                            <Button
+                                onClick={handleApproveConfirm}
+                                disabled={isProcessingApprove}
+                                className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                            >
+                                {isProcessingApprove ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        <span>Sending Email...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Mail className="h-4 w-4" />
+                                        <span>Approve & Send Email</span>
+                                    </>
+                                )}
                             </Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
 
-                <Dialog open={!!declineConfirm} onOpenChange={(open) => { if (!open) { setDeclineConfirm(null); setDeclineRemarks(''); } }}>
+                <Dialog open={!!declineConfirm} onOpenChange={(open) => { if (!open && !isProcessingDecline) { setDeclineConfirm(null); setDeclineRemarks(''); } }}>
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>Decline application</DialogTitle>
                             <DialogDescription>
-                                The application status will be set to Cancelled and the applicant will be notified. You may add optional remarks below.
+                                The application status will be set to Cancelled and a decline notification email will be sent to the applicant. You may add optional remarks below.
                             </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-2 py-2">
@@ -603,17 +633,43 @@ export default function ListOfAppliedApplicants({
                                 id="decline-remarks"
                                 placeholder="e.g. Reason for declining..."
                                 value={declineRemarks}
+                                disabled={isProcessingDecline}
                                 onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setDeclineRemarks(e.target.value)}
                                 className="flex min-h-[80px] w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 maxLength={1000}
                             />
                         </div>
+                        {isProcessingDecline && (
+                            <div className="flex items-center gap-2.5 rounded-lg border border-red-200 bg-red-50/80 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
+                                <Loader2 className="h-4 w-4 animate-spin text-red-600 dark:text-red-400" />
+                                <span>Sending decline email to applicant...</span>
+                            </div>
+                        )}
                         <DialogFooter>
-                            <Button variant="outline" onClick={() => { setDeclineConfirm(null); setDeclineRemarks(''); }}>
+                            <Button
+                                variant="outline"
+                                disabled={isProcessingDecline}
+                                onClick={() => { setDeclineConfirm(null); setDeclineRemarks(''); }}
+                            >
                                 Cancel
                             </Button>
-                            <Button variant="destructive" onClick={handleDeclineConfirm}>
-                                Decline
+                            <Button
+                                variant="destructive"
+                                disabled={isProcessingDecline}
+                                onClick={handleDeclineConfirm}
+                                className="gap-2"
+                            >
+                                {isProcessingDecline ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        <span>Sending Email...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Mail className="h-4 w-4" />
+                                        <span>Decline & Send Email</span>
+                                    </>
+                                )}
                             </Button>
                         </DialogFooter>
                     </DialogContent>

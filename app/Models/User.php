@@ -99,4 +99,28 @@ class User extends Authenticatable
     {
         return $this->hasOne(\App\Models\job_seeker_other_information::class, 'users_id');
     }
+
+    /**
+     * Get all email logs sent to this user.
+     */
+    public function receivedEmailLogs()
+    {
+        return $this->hasMany(\App\Models\EmailLog::class, 'user_id');
+    }
+
+    /**
+     * Get all email logs triggered/sent by this user.
+     */
+    public function sentEmailLogs()
+    {
+        return $this->hasMany(\App\Models\EmailLog::class, 'sender_id');
+    }
+
+    /**
+     * Dynamic helper to send an email to this user and log the transaction.
+     */
+    public function sendEmail(\Illuminate\Mail\Mailable $mailable, array $options = []): \App\Models\EmailLog
+    {
+        return \App\Models\EmailLog::sendAndLog($this, $mailable, $options);
+    }
 }

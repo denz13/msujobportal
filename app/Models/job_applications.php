@@ -29,5 +29,10 @@ class job_applications extends Model
     {
         return $this->belongsTo(post_jobs::class, 'post_jobs_id');
     }
+
+    public function emailLogs()
+    {
+        return $this->morphMany(EmailLog::class, 'emailable');
+    }
 }
 

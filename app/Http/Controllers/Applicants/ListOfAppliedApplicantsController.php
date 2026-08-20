@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Applicants;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ApplicationStatusMail;
 use App\Models\job_applications;
 use App\Models\User;
 use App\Notifications\SystemNotification;
@@ -10,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -179,10 +181,32 @@ class ListOfAppliedApplicantsController extends Controller
                     'applicant_id' => $applicant->id,
                 ]);
             }
+
+            if (! empty($applicant->email)) {
+                $mailable = new ApplicationStatusMail(
+                    applicantName: $applicant->display_name ?: ($applicant->firstname . ' ' . $applicant->lastname),
+                    jobTitle: $application->job?->job_title ?? 'Applied Job',
+                    status: 'approved',
+                    remarks: null,
+                    employerName: $user->display_name ?? null,
+                    actionUrl: url('/applications')
+                );
+
+                \App\Models\EmailLog::sendAndLog($applicant, $mailable, [
+                    'mail_type' => 'application_approved',
+                    'emailable' => $application,
+                    'sender_id' => $user->id,
+                    'meta' => [
+                        'application_id' => $application->id,
+                        'post_jobs_id' => $application->post_jobs_id,
+                        'job_title' => $application->job?->job_title,
+                    ],
+                ]);
+            }
         }
 
         return redirect()->route('list-of-applied-applicants.index')
-            ->with('toast', ['type' => 'success', 'message' => 'Application approved. Applicant has been notified.']);
+            ->with('toast', ['type' => 'success', 'message' => 'Application approved. Applicant has been notified via email.']);
     }
 
     /**
@@ -242,9 +266,32 @@ class ListOfAppliedApplicantsController extends Controller
                     'applicant_id' => $applicant->id,
                 ]);
             }
+
+            if (! empty($applicant->email)) {
+                $mailable = new ApplicationStatusMail(
+                    applicantName: $applicant->display_name ?: ($applicant->firstname . ' ' . $applicant->lastname),
+                    jobTitle: $application->job?->job_title ?? 'Applied Job',
+                    status: 'declined',
+                    remarks: $validated['remarks'] ?? null,
+                    employerName: $user->display_name ?? null,
+                    actionUrl: url('/applications')
+                );
+
+                \App\Models\EmailLog::sendAndLog($applicant, $mailable, [
+                    'mail_type' => 'application_declined',
+                    'emailable' => $application,
+                    'sender_id' => $user->id,
+                    'meta' => [
+                        'application_id' => $application->id,
+                        'post_jobs_id' => $application->post_jobs_id,
+                        'job_title' => $application->job?->job_title,
+                        'remarks' => $validated['remarks'] ?? null,
+                    ],
+                ]);
+            }
         }
 
         return redirect()->route('list-of-applied-applicants.index')
-            ->with('toast', ['type' => 'success', 'message' => 'Application declined. Applicant has been notified.']);
+            ->with('toast', ['type' => 'success', 'message' => 'Application declined. Applicant has been notified via email.']);
     }
 }

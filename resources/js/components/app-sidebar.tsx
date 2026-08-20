@@ -73,6 +73,17 @@ const defaultNavGroups: NavGroup[] = [
             },
         ],
     },
+    {
+        label: 'System Logs',
+        items: [
+            {
+                title: 'Activity & Email Logs',
+                href: '/admin/logs',
+                icon: FileText,
+                iconClassName: 'h-5 w-5 shrink-0 text-indigo-500 transition-all duration-200 group-hover:scale-110 group-hover:rotate-6 group-hover:text-indigo-400',
+            },
+        ],
+    },
 ];
 
 const employerIncompleteNavGroups: NavGroup[] = [

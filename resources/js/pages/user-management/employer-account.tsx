@@ -111,6 +111,7 @@ type PaginatedEmployers = {
 
 type Props = {
     employers: PaginatedEmployers;
+    categories?: Array<{ id: number; name: string }>;
     filters?: {
         search?: string;
         status?: string;
@@ -131,6 +132,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function EmployerAccount({
     employers,
+    categories = [],
     filters = {},
     uniqueStatuses = [],
 }: Props) {
@@ -149,12 +151,35 @@ export default function EmployerAccount({
     const [employerToAction, setEmployerToAction] = useState<Employer | null>(null);
     const [updateModalOpen, setUpdateModalOpen] = useState(false);
     const [employerToUpdate, setEmployerToUpdate] = useState<Employer | null>(null);
+    const [updateSelectedBusinessType, setUpdateSelectedBusinessType] = useState<string>('');
+    const [updateCustomBusinessType, setUpdateCustomBusinessType] = useState<string>('');
     const [isUpdateSubmitting, setIsUpdateSubmitting] = useState(false);
     const [permitPreviewOpen, setPermitPreviewOpen] = useState(false);
     const [permitPreviewUrl, setPermitPreviewUrl] = useState<string | null>(null);
     const [permitPreviewTitle, setPermitPreviewTitle] = useState<string>('');
     const page = usePage();
     const formErrors = (page.props as { errors?: Record<string, string> }).errors ?? {};
+
+    const openUpdateModal = (employer: Employer) => {
+        setEmployerToUpdate(employer);
+        const currentType = employer.employer_information?.type_of_business ?? '';
+        if (!currentType) {
+            setUpdateSelectedBusinessType('');
+            setUpdateCustomBusinessType('');
+        } else {
+            const isKnown = categories.some(
+                (c) => c.name.toLowerCase() === currentType.toLowerCase(),
+            );
+            if (isKnown) {
+                setUpdateSelectedBusinessType(currentType);
+                setUpdateCustomBusinessType('');
+            } else {
+                setUpdateSelectedBusinessType('others');
+                setUpdateCustomBusinessType(currentType);
+            }
+        }
+        setUpdateModalOpen(true);
+    };
 
     // Debounce search and update URL (skip on initial mount)
     useEffect(() => {
@@ -673,11 +698,8 @@ export default function EmployerAccount({
                                                                  <span>View Business Permit</span>
                                                              </DropdownMenuItem>
                                                              <DropdownMenuSeparator />
-                                                            <DropdownMenuItem
-                                                                onClick={() => {
-                                                                    setEmployerToUpdate(employer);
-                                                                    setUpdateModalOpen(true);
-                                                                }}
+                                                             <DropdownMenuItem
+                                                                onClick={() => openUpdateModal(employer)}
                                                                 className="flex items-center gap-2"
                                                             >
                                                                 <Pencil className="size-4" />
@@ -1166,14 +1188,53 @@ export default function EmployerAccount({
 
                                             <div className="grid gap-2">
                                                 <Label htmlFor="update-type_of_business">Type of business</Label>
-                                                <Input
-                                                    id="update-type_of_business"
+                                                <Select
+                                                    value={updateSelectedBusinessType}
+                                                    onValueChange={(val) => {
+                                                        setUpdateSelectedBusinessType(val);
+                                                        if (val !== 'others') {
+                                                            setUpdateCustomBusinessType('');
+                                                        }
+                                                    }}
+                                                >
+                                                    <SelectTrigger id="update-type_of_business" className="w-full">
+                                                        <SelectValue placeholder="Select type of business" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {categories.map((c) => (
+                                                            <SelectItem key={c.id} value={c.name}>
+                                                                {c.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                        <SelectItem value="others">
+                                                            Others (Please specify)
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+
+                                                {updateSelectedBusinessType === 'others' && (
+                                                    <div className="mt-1.5 space-y-1">
+                                                        <Label htmlFor="update-custom_type_of_business" className="text-xs text-muted-foreground">
+                                                            Please specify type of business <span className="text-destructive">*</span>
+                                                        </Label>
+                                                        <Input
+                                                            id="update-custom_type_of_business"
+                                                            required
+                                                            value={updateCustomBusinessType}
+                                                            onChange={(e) => setUpdateCustomBusinessType(e.target.value)}
+                                                            placeholder="e.g. Retail, Healthcare Services, etc."
+                                                        />
+                                                    </div>
+                                                )}
+
+                                                <input
+                                                    type="hidden"
                                                     name="type_of_business"
-                                                    required
-                                                    defaultValue={
-                                                        employerToUpdate.employer_information?.type_of_business ?? ''
+                                                    value={
+                                                        updateSelectedBusinessType === 'others'
+                                                            ? updateCustomBusinessType
+                                                            : updateSelectedBusinessType
                                                     }
-                                                    placeholder="e.g. Retail"
                                                 />
                                                 <InputError message={formErrors.type_of_business} />
                                             </div>

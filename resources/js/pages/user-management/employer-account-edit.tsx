@@ -1,4 +1,5 @@
 import { Form, Head, Link } from '@inertiajs/react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -6,6 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -31,10 +39,28 @@ type EmployerInformation = {
 export default function EmployerAccountEdit({
     employer,
     employerInformation,
+    categories = [],
 }: {
     employer: Employer;
     employerInformation?: EmployerInformation | null;
+    categories?: Array<{ id: number; name: string }>;
 }) {
+    const currentBusinessType = employerInformation?.type_of_business ?? '';
+    const isKnownCategory = currentBusinessType
+        ? categories.some(
+              (c) => c.name.toLowerCase() === currentBusinessType.toLowerCase(),
+          )
+        : false;
+
+    const [selectedBusinessType, setSelectedBusinessType] = useState<string>(() => {
+        if (!currentBusinessType) return '';
+        return isKnownCategory ? currentBusinessType : 'others';
+    });
+
+    const [customBusinessType, setCustomBusinessType] = useState<string>(() => {
+        if (!currentBusinessType) return '';
+        return isKnownCategory ? '' : currentBusinessType;
+    });
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Employer Accounts',
@@ -64,12 +90,12 @@ export default function EmployerAccountEdit({
                             method="post"
                             options={{
                                 preserveScroll: true,
-                                onSuccess: () => {
-                                    toast.success('Employer information updated');
-                                },
-                                onError: () => {
-                                    toast.error('Please fix the errors and try again');
-                                },
+                            }}
+                            onSuccess={() => {
+                                toast.success('Employer information updated');
+                            }}
+                            onError={() => {
+                                toast.error('Please fix the errors and try again');
                             }}
                             className="space-y-6"
                         >
@@ -158,15 +184,59 @@ export default function EmployerAccountEdit({
                                         <Label htmlFor="type_of_business">
                                             Type of business
                                         </Label>
-                                        <Input
-                                            id="type_of_business"
+                                        <Select
+                                            value={selectedBusinessType}
+                                            onValueChange={(val) => {
+                                                setSelectedBusinessType(val);
+                                                if (val !== 'others') {
+                                                    setCustomBusinessType('');
+                                                }
+                                            }}
+                                        >
+                                            <SelectTrigger id="type_of_business" className="w-full">
+                                                <SelectValue placeholder="Select type of business" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {categories.map((c) => (
+                                                    <SelectItem key={c.id} value={c.name}>
+                                                        {c.name}
+                                                    </SelectItem>
+                                                ))}
+                                                <SelectItem value="others">
+                                                    Others (Please specify)
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+
+                                        {selectedBusinessType === 'others' && (
+                                            <div className="mt-1.5 space-y-1">
+                                                <Label
+                                                    htmlFor="custom_type_of_business"
+                                                    className="text-xs text-muted-foreground"
+                                                >
+                                                    Please specify type of business{' '}
+                                                    <span className="text-destructive">*</span>
+                                                </Label>
+                                                <Input
+                                                    id="custom_type_of_business"
+                                                    required
+                                                    value={customBusinessType}
+                                                    onChange={(e) =>
+                                                        setCustomBusinessType(e.target.value)
+                                                    }
+                                                    placeholder="e.g. Retail, Healthcare Services, etc."
+                                                />
+                                            </div>
+                                        )}
+
+                                        <input
+                                            type="hidden"
                                             name="type_of_business"
-                                            required
-                                            defaultValue={
-                                                employerInformation?.type_of_business ??
-                                                ''
+                                            value={
+                                                selectedBusinessType === 'others'
+                                                    ? customBusinessType
+                                                    : selectedBusinessType
                                             }
-                                            placeholder="e.g. Retail"
                                         />
                                         <InputError message={errors.type_of_business} />
                                     </div>

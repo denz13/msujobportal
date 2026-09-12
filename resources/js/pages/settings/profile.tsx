@@ -49,7 +49,7 @@ export default function Profile({
     mustVerifyEmail: boolean;
     status?: string;
 }) {
-    const { auth, employerInformation, flash } = usePage().props as {
+    const { auth, employerInformation, flash, categories = [] } = usePage().props as {
         auth: { user: any };
         employerInformation?: {
             position: string | null;
@@ -61,7 +61,26 @@ export default function Profile({
             status: string | null;
         } | null;
         flash?: { toast?: { type: string; message: string } };
+        categories?: Array<{ id: number; name: string }>;
     };
+
+    const initialTypeOfBusiness = employerInformation?.type_of_business ?? '';
+    const isKnownCategory = Boolean(
+        initialTypeOfBusiness &&
+        categories.some(
+            (c) => c.name.toLowerCase() === initialTypeOfBusiness.toLowerCase(),
+        ),
+    );
+
+    const [selectedBusinessType, setSelectedBusinessType] = useState<string>(() => {
+        if (!initialTypeOfBusiness) return '';
+        return isKnownCategory ? initialTypeOfBusiness : 'others';
+    });
+
+    const [customBusinessType, setCustomBusinessType] = useState<string>(() => {
+        if (!initialTypeOfBusiness) return '';
+        return isKnownCategory ? '' : initialTypeOfBusiness;
+    });
 
     const [activeTab, setActiveTab] = useState<'account' | 'business' | 'password'>(
         'account',
@@ -939,17 +958,65 @@ export default function Profile({
                                                 <Label htmlFor="type_of_business">
                                                     Type of business
                                                 </Label>
-                                                <Input
-                                                    id="type_of_business"
-                                                    className="mt-1 block w-full"
-                                                    defaultValue={
-                                                        employerInformation
-                                                            ?.type_of_business ??
-                                                        ''
+                                                <Select
+                                                    value={selectedBusinessType}
+                                                    onValueChange={(val) => {
+                                                        setSelectedBusinessType(val);
+                                                        if (val !== 'others') {
+                                                            setCustomBusinessType('');
+                                                        }
+                                                    }}
+                                                    disabled={
+                                                        employerInformation?.status === 'pending' ||
+                                                        employerInformation?.status === 'approved'
                                                     }
+                                                >
+                                                    <SelectTrigger id="type_of_business" className="mt-1 w-full">
+                                                        <SelectValue placeholder="Select type of business" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {categories.map((c) => (
+                                                            <SelectItem key={c.id} value={c.name}>
+                                                                {c.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                        <SelectItem value="others">
+                                                            Others (Please specify)
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+
+                                                {selectedBusinessType === 'others' && (
+                                                    <div className="mt-1.5 space-y-1">
+                                                        <Label
+                                                            htmlFor="custom_type_of_business"
+                                                            className="text-xs text-muted-foreground"
+                                                        >
+                                                            Please specify type of business
+                                                        </Label>
+                                                        <Input
+                                                            id="custom_type_of_business"
+                                                            value={customBusinessType}
+                                                            onChange={(e) =>
+                                                                setCustomBusinessType(e.target.value)
+                                                            }
+                                                            placeholder="e.g. Retail, Healthcare Services, etc."
+                                                            disabled={
+                                                                employerInformation?.status === 'pending' ||
+                                                                employerInformation?.status === 'approved'
+                                                            }
+                                                        />
+                                                    </div>
+                                                )}
+
+                                                <input
+                                                    type="hidden"
                                                     name="type_of_business"
-                                                    placeholder="e.g. Retail, Services"
-                                                    disabled={employerInformation?.status === 'pending' || employerInformation?.status === 'approved'}
+                                                    value={
+                                                        selectedBusinessType === 'others'
+                                                            ? customBusinessType
+                                                            : selectedBusinessType
+                                                    }
                                                 />
                                                 <InputError
                                                     className="mt-2"

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\UserManagement;
 
 use App\Http\Controllers\Controller;
+use App\Models\BusinessCategory;
+use App\Models\JobCategory;
 use App\Models\User;
 use App\Models\employer_information;
 use App\Notifications\SystemNotification;
@@ -80,8 +82,15 @@ class EmployerAccountController extends Controller
             return $employer;
         });
 
+        $categories = BusinessCategory::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->toArray();
+
         return Inertia::render('user-management/employer-account', [
             'employers' => $employers,
+            'categories' => $categories,
             'filters' => [
                 'search' => $search,
                 'status' => $status,
@@ -96,6 +105,12 @@ class EmployerAccountController extends Controller
 
         $user->load('employerInformation');
 
+        $categories = BusinessCategory::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->toArray();
+
         return Inertia::render('user-management/employer-account-edit', [
             'employer' => [
                 'id' => $user->id,
@@ -104,6 +119,7 @@ class EmployerAccountController extends Controller
                 'status' => $user->status,
             ],
             'employerInformation' => $user->employerInformation,
+            'categories' => $categories,
         ]);
     }
 

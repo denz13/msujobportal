@@ -198,7 +198,10 @@ export default function Register() {
                                                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                                     </button>
                                                 </div>
-                                                <InputError message={errors.password} />
+                                                <p className="text-xs text-slate-400">
+                                                    Password must be at least 8 characters.
+                                                </p>
+                                                <InputError message={errors.password ? 'The password must be at least 8 characters.' : undefined} />
                                             </div>
 
                                             <div className="grid gap-2">

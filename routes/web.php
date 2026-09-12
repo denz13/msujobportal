@@ -147,6 +147,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('user-management/employer-account/{user}', [EmployerAccountController::class, 'update'])->name('employer-account.update');
     Route::delete('user-management/employer-account/{user}', [EmployerAccountController::class, 'destroy'])->name('employer-account.destroy');
 
+    Route::get('user-management/business-categories', [\App\Http\Controllers\UserManagement\BusinessCategoryController::class, 'index'])->name('business-categories.index');
+    Route::post('user-management/business-categories', [\App\Http\Controllers\UserManagement\BusinessCategoryController::class, 'store'])->name('business-categories.store');
+    Route::put('user-management/business-categories/{id}', [\App\Http\Controllers\UserManagement\BusinessCategoryController::class, 'update'])->name('business-categories.update');
+    Route::patch('user-management/business-categories/{id}/toggle-status', [\App\Http\Controllers\UserManagement\BusinessCategoryController::class, 'toggleStatus'])->name('business-categories.toggle-status');
+    Route::delete('user-management/business-categories/{id}', [\App\Http\Controllers\UserManagement\BusinessCategoryController::class, 'destroy'])->name('business-categories.destroy');
+
     Route::get('admin/logs', [\App\Http\Controllers\Admin\LogsController::class, 'index'])->name('admin.logs.index');
 });
 

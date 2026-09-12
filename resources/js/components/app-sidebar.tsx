@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Building2, FileText, Layers, LayoutGrid, User, Users } from 'lucide-react';
+import { Briefcase, Building2, FileText, Layers, LayoutGrid, User, Users } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import {
     Sidebar,
@@ -76,6 +76,12 @@ const defaultNavGroups: NavGroup[] = [
                 href: '/user-management/employer-account',
                 icon: Users,
                 iconClassName: 'h-5 w-5 shrink-0 text-rose-500 transition-all duration-200 group-hover:scale-110 group-hover:rotate-6 group-hover:text-rose-400',
+            },
+            {
+                title: 'Business Categories',
+                href: '/user-management/business-categories',
+                icon: Briefcase,
+                iconClassName: 'h-5 w-5 shrink-0 text-amber-500 transition-all duration-200 group-hover:scale-110 group-hover:rotate-6 group-hover:text-amber-400',
             },
         ],
     },

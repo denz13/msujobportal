@@ -91,6 +91,7 @@ export default function PostJobs() {
     const pageProps = usePage().props as unknown as {
         flash?: { toast?: { type: string; message: string } };
         jobs?: Job[];
+        categories?: { id: number; name: string }[];
         errors?: Record<string, string>;
         filters?: { search?: string; status?: string };
         uniqueStatuses?: string[];
@@ -104,6 +105,7 @@ export default function PostJobs() {
     const {
         flash,
         jobs = [],
+        categories = [],
         errors: pageErrors,
         filters = {},
         uniqueStatuses = [],
@@ -112,6 +114,8 @@ export default function PostJobs() {
 
     const [modalOpen, setModalOpen] = useState(false);
     const [editingJob, setEditingJob] = useState<Job | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<string>('');
+    const [customCategory, setCustomCategory] = useState<string>('');
     const [detailsJob, setDetailsJob] = useState<Job | null>(null);
     const [availabilityTogglingId, setAvailabilityTogglingId] = useState<number | null>(null);
     const [availabilityOverride, setAvailabilityOverride] = useState<Record<number, boolean>>({});
@@ -122,8 +126,26 @@ export default function PostJobs() {
     const flashShown = useRef(false);
     const isInitialMount = useRef(true);
 
+    const initCategoryState = (jobCat?: string | null) => {
+        if (!jobCat) {
+            setSelectedCategory('');
+            setCustomCategory('');
+            return;
+        }
+        const existsInList = categories.some((c) => c.name.toLowerCase() === jobCat.toLowerCase());
+        if (existsInList) {
+            setSelectedCategory(jobCat);
+            setCustomCategory('');
+        } else {
+            setSelectedCategory('others');
+            setCustomCategory(jobCat);
+        }
+    };
+
     const openModal = () => {
         setEditingJob(null);
+        setSelectedCategory('');
+        setCustomCategory('');
         setDropzoneKey((k) => k + 1);
         setModalOpen(true);
     };
@@ -136,6 +158,7 @@ export default function PostJobs() {
             if (!res.ok) throw new Error('Failed to load job');
             const data = (await res.json()) as Job;
             setEditingJob(data);
+            initCategoryState(data.job_category);
             setDropzoneKey((k) => k + 1);
             setModalOpen(true);
         } catch {
@@ -688,13 +711,52 @@ export default function PostJobs() {
                                     <InputError message={errors.job_description} />
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="modal_job_category">Job category</Label>
-                                    <Input
-                                        id="modal_job_category"
+                                    <Label htmlFor="modal_job_category">Job category <span className="text-destructive">*</span></Label>
+                                    <Select
+                                        value={selectedCategory}
+                                        onValueChange={(val) => {
+                                            setSelectedCategory(val);
+                                            if (val !== 'others') {
+                                                setCustomCategory('');
+                                            }
+                                        }}
+                                    >
+                                        <SelectTrigger id="modal_job_category" className="w-full">
+                                            <SelectValue placeholder="Select a category" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {categories.map((c) => (
+                                                <SelectItem key={c.id} value={c.name}>
+                                                    {c.name}
+                                                </SelectItem>
+                                            ))}
+                                            <SelectItem value="others">
+                                                Others (Please specify)
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+
+                                    {/* If Others is selected, show input to specify */}
+                                    {selectedCategory === 'others' && (
+                                        <div className="mt-1.5 space-y-1">
+                                            <Label htmlFor="modal_custom_category" className="text-xs text-muted-foreground">
+                                                Please specify category name <span className="text-destructive">*</span>
+                                            </Label>
+                                            <Input
+                                                id="modal_custom_category"
+                                                required
+                                                value={customCategory}
+                                                onChange={(e) => setCustomCategory(e.target.value)}
+                                                placeholder="e.g. Graphic Design, Data Science, etc."
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Hidden input to pass the final category value in standard form submit */}
+                                    <input
+                                        type="hidden"
                                         name="job_category"
-                                        required
-                                        defaultValue={editingJob?.job_category ?? ''}
-                                        placeholder="e.g. IT, Healthcare, Education"
+                                        value={selectedCategory === 'others' ? customCategory : selectedCategory}
                                     />
                                     <InputError message={errors.job_category} />
                                 </div>
@@ -765,7 +827,14 @@ export default function PostJobs() {
                                     >
                                         Cancel
                                     </Button>
-                                    <Button type="submit" disabled={processing}>
+                                    <Button
+                                        type="submit"
+                                        disabled={
+                                            processing ||
+                                            !selectedCategory ||
+                                            (selectedCategory === 'others' && !customCategory.trim())
+                                        }
+                                    >
                                         {processing ? (isEdit ? 'Updating...' : 'Posting...') : (isEdit ? 'Update Job' : 'Post Job')}
                                     </Button>
                                 </div>

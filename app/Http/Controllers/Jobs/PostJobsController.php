@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Jobs;
 
 use App\Http\Controllers\Controller;
+use App\Models\JobCategory;
 use App\Models\post_jobs;
 use App\Models\User;
 use App\Notifications\SystemNotification;
@@ -67,8 +68,15 @@ class PostJobsController extends Controller
             ->values()
             ->all();
 
+        $categories = JobCategory::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->toArray();
+
         return Inertia::render('jobs/post-jobs', [
             'jobs' => $jobs,
+            'categories' => $categories,
             'filters' => [
                 'search' => $search,
                 'status' => $status,

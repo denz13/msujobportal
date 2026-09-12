@@ -4,6 +4,9 @@ import {
     Building2,
     Calendar,
     CheckCircle,
+    Download,
+    Eye,
+    ExternalLink,
     FileText,
     Mail,
     MapPin,
@@ -147,6 +150,9 @@ export default function EmployerAccount({
     const [updateModalOpen, setUpdateModalOpen] = useState(false);
     const [employerToUpdate, setEmployerToUpdate] = useState<Employer | null>(null);
     const [isUpdateSubmitting, setIsUpdateSubmitting] = useState(false);
+    const [permitPreviewOpen, setPermitPreviewOpen] = useState(false);
+    const [permitPreviewUrl, setPermitPreviewUrl] = useState<string | null>(null);
+    const [permitPreviewTitle, setPermitPreviewTitle] = useState<string>('');
     const page = usePage();
     const formErrors = (page.props as { errors?: Record<string, string> }).errors ?? {};
 
@@ -242,6 +248,30 @@ export default function EmployerAccount({
         } catch {
             toast.error('An error occurred while deleting employer account');
         }
+    };
+
+    const getPermitFileUrl = (permitPath: string | null | undefined) => {
+        if (!permitPath) return null;
+        if (permitPath.startsWith('http://') || permitPath.startsWith('https://') || permitPath.startsWith('/')) {
+            return permitPath;
+        }
+        return `/${permitPath}`;
+    };
+
+    const isPdfFile = (path: string | null | undefined) => {
+        if (!path) return false;
+        return path.toLowerCase().endsWith('.pdf') || path.toLowerCase().includes('.pdf?') || path.includes('application/pdf');
+    };
+
+    const handleOpenPermitPreview = (employer: Employer) => {
+        const permit = employer.employer_information?.business_permit;
+        if (!permit) {
+            toast.error('No business permit attached for this employer.');
+            return;
+        }
+        setPermitPreviewUrl(getPermitFileUrl(permit));
+        setPermitPreviewTitle(`${employer.display_name} - Business Permit`);
+        setPermitPreviewOpen(true);
     };
 
     const handleApproveEmployer = (employer: Employer) => {
@@ -617,18 +647,32 @@ export default function EmployerAccount({
                                                             </Button>
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem
-                                                                onClick={() =>
-                                                                    handleViewDetails(
-                                                                        employer,
-                                                                    )
-                                                                }
-                                                                className="flex items-center gap-2"
-                                                            >
-                                                                <span className="inline-block size-2 rounded-full bg-primary" />
-                                                                <span>View details</span>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
+                                                             <DropdownMenuItem
+                                                                 onClick={() =>
+                                                                     handleViewDetails(
+                                                                         employer,
+                                                                     )
+                                                                 }
+                                                                 className="flex items-center gap-2"
+                                                             >
+                                                                 <span className="inline-block size-2 rounded-full bg-primary" />
+                                                                 <span>View details</span>
+                                                             </DropdownMenuItem>
+                                                             <DropdownMenuItem
+                                                                 onClick={() =>
+                                                                     handleOpenPermitPreview(
+                                                                         employer,
+                                                                     )
+                                                                 }
+                                                                 disabled={
+                                                                     !employer.employer_information?.business_permit
+                                                                 }
+                                                                 className="flex items-center gap-2"
+                                                             >
+                                                                 <FileText className="size-4" />
+                                                                 <span>View Business Permit</span>
+                                                             </DropdownMenuItem>
+                                                             <DropdownMenuSeparator />
                                                             <DropdownMenuItem
                                                                 onClick={() => {
                                                                     setEmployerToUpdate(employer);
@@ -908,11 +952,35 @@ export default function EmployerAccount({
                                                             <span>Business permit</span>
                                                         </dt>
                                                         <dd className="text-xs sm:text-sm font-medium flex-1 break-words min-w-0">
-                                                            {
-                                                                selectedEmployer
-                                                                    .employer_information
-                                                                    .business_permit
-                                                            }
+                                                            {selectedEmployer.employer_information.business_permit ? (
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    <span className="truncate max-w-[200px] text-muted-foreground text-xs">
+                                                                        {selectedEmployer.employer_information.business_permit.split('/').pop()}
+                                                                    </span>
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        className="h-7 px-2.5 text-xs flex items-center gap-1.5 text-primary hover:text-primary"
+                                                                        onClick={() => handleOpenPermitPreview(selectedEmployer)}
+                                                                    >
+                                                                        <Eye className="size-3.5" />
+                                                                        <span>View file</span>
+                                                                    </Button>
+                                                                    <a
+                                                                        href={getPermitFileUrl(selectedEmployer.employer_information.business_permit) || '#'}
+                                                                        target="_blank"
+                                                                        rel="noreferrer"
+                                                                        download
+                                                                        className="inline-flex items-center gap-1.5 h-7 px-2.5 text-xs rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors font-medium"
+                                                                    >
+                                                                        <Download className="size-3.5" />
+                                                                        <span>Download</span>
+                                                                    </a>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-muted-foreground">None</span>
+                                                            )}
                                                         </dd>
                                                     </div>
                                                     <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
@@ -1222,6 +1290,76 @@ export default function EmployerAccount({
                                     : confirmAction === 'approve-business'
                                     ? 'Approve Business'
                                     : 'Decline Business'}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Business Permit Attachment Preview Modal */}
+                <Dialog open={permitPreviewOpen} onOpenChange={setPermitPreviewOpen}>
+                    <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] flex flex-col p-4 sm:p-6">
+                        <DialogHeader className="pb-2 border-b">
+                            <div className="flex flex-wrap items-center justify-between gap-2 pr-6">
+                                <DialogTitle className="text-lg font-semibold flex items-center gap-2">
+                                    <FileText className="size-5 text-primary" />
+                                    <span>{permitPreviewTitle || 'Business Permit Document'}</span>
+                                </DialogTitle>
+                                {permitPreviewUrl && (
+                                    <div className="flex items-center gap-2">
+                                        <a
+                                            href={permitPreviewUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border hover:bg-accent transition-colors"
+                                        >
+                                            <ExternalLink className="size-3.5" />
+                                            <span>Open in new tab</span>
+                                        </a>
+                                        <a
+                                            href={permitPreviewUrl}
+                                            download
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                                        >
+                                            <Download className="size-3.5" />
+                                            <span>Download</span>
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
+                            <DialogDescription className="text-xs text-muted-foreground mt-1">
+                                Preview of the uploaded business permit or certification document.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="flex-1 min-h-[300px] max-h-[65vh] overflow-auto flex items-center justify-center p-2 sm:p-4 bg-muted/20 rounded-md border mt-2">
+                            {permitPreviewUrl ? (
+                                isPdfFile(permitPreviewUrl) ? (
+                                    <iframe
+                                        src={permitPreviewUrl}
+                                        title="Business Permit Document"
+                                        className="w-full h-[60vh] rounded border-0 bg-white"
+                                    />
+                                ) : (
+                                    <div className="relative max-h-full max-w-full flex items-center justify-center">
+                                        <img
+                                            src={permitPreviewUrl}
+                                            alt="Business Permit"
+                                            className="max-h-[60vh] max-w-full object-contain rounded shadow-sm"
+                                        />
+                                    </div>
+                                )
+                            ) : (
+                                <p className="text-muted-foreground text-sm">No permit file to display.</p>
+                            )}
+                        </div>
+
+                        <DialogFooter className="pt-3 border-t">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setPermitPreviewOpen(false)}
+                            >
+                                Close
                             </Button>
                         </DialogFooter>
                     </DialogContent>

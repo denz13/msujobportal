@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Applicants\ListOfAppliedApplicantsController;
+use App\Http\Controllers\Jobs\JobCategoryController;
 use App\Http\Controllers\Jobs\ListRequestJobsPostController;
 use App\Http\Controllers\Jobs\PostJobsController;
 use App\Http\Controllers\Notifications\NotificationController;
@@ -100,6 +101,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('jobs/list-request-jobs-post', [ListRequestJobsPostController::class, 'index'])->name('list-request-jobs-post.index');
     Route::patch('jobs/list-request-jobs-post/{id}/approve', [ListRequestJobsPostController::class, 'approve'])->name('list-request-jobs-post.approve');
     Route::patch('jobs/list-request-jobs-post/{id}/decline', [ListRequestJobsPostController::class, 'decline'])->name('list-request-jobs-post.decline');
+    Route::get('jobs/categories', [JobCategoryController::class, 'index'])->name('job-categories.index');
+    Route::post('jobs/categories', [JobCategoryController::class, 'store'])->name('job-categories.store');
+    Route::put('jobs/categories/{id}', [JobCategoryController::class, 'update'])->name('job-categories.update');
+    Route::patch('jobs/categories/{id}/toggle-status', [JobCategoryController::class, 'toggleStatus'])->name('job-categories.toggle-status');
+    Route::delete('jobs/categories/{id}', [JobCategoryController::class, 'destroy'])->name('job-categories.destroy');
     Route::get('jobs/post-jobs', [PostJobsController::class, 'index'])->name('post-jobs.index');
     Route::post('jobs/post-jobs', [PostJobsController::class, 'store'])->name('post-jobs.store');
     Route::get('jobs/post-jobs/{id}', [PostJobsController::class, 'show'])->name('post-jobs.show');

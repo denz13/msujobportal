@@ -144,24 +144,59 @@ class ListOfAppliedApplicantsController extends Controller
             abort(403);
         }
 
+        $validated = $request->validate([
+            'interview_date' => 'nullable|date',
+            'interview_time' => 'nullable|string|max:100',
+            'interview_type' => 'nullable|string|in:face-to-face,virtual,phone',
+            'interview_location' => 'nullable|string|max:500',
+            'contact_person' => 'nullable|string|max:255',
+            'contact_phone' => 'nullable|string|max:50',
+            'interview_instructions' => 'nullable|string|max:2000',
+        ]);
+
         $query = job_applications::query();
         if ($user->role === 'employer') {
             $query->whereHas('job', fn ($q) => $q->where('user_id', $user->id));
         }
 
-        $application = $query->with(['user', 'job:id,job_title'])
+        $application = $query->with(['user', 'job:id,job_title,user_id'])
             ->findOrFail($id);
 
-        $application->update(['status' => 'approved']);
+        $application->update([
+            'status' => 'approved',
+            'interview_date' => $validated['interview_date'] ?? null,
+            'interview_time' => $validated['interview_time'] ?? null,
+            'interview_type' => $validated['interview_type'] ?? null,
+            'interview_location' => $validated['interview_location'] ?? null,
+            'contact_person' => $validated['contact_person'] ?? null,
+            'contact_phone' => $validated['contact_phone'] ?? null,
+            'interview_instructions' => $validated['interview_instructions'] ?? null,
+        ]);
 
         $applicant = $application->user ?: User::find($application->users_id);
         if ($applicant) {
+            $jobTitle = $application->job?->job_title ?? 'the job';
+            $subjectForSearch = rawurlencode('Congratulations! Your Application has been Approved - ' . $jobTitle);
+            $gmailWebUrl = "https://mail.google.com/mail/u/0/#search/{$subjectForSearch}";
+
+            $interviewSummary = '';
+            if (!empty($validated['interview_date'])) {
+                $interviewSummary .= ' Date: ' . date('M d, Y', strtotime($validated['interview_date']));
+            }
+            if (!empty($validated['interview_time'])) {
+                $interviewSummary .= ' at ' . $validated['interview_time'];
+            }
+            if (!empty($validated['interview_type'])) {
+                $interviewSummary .= ' (' . ucwords(str_replace('_', ' ', $validated['interview_type'])) . ')';
+            }
+
             try {
                 $applicant->notify(new SystemNotification(
                     title: 'Application approved',
                     message: sprintf(
-                        'Your application for "%s" has been approved.',
-                        $application->job?->job_title ?? 'the job'
+                        'Your application for "%s" has been approved!%s Click to view full interview details and open in Gmail.',
+                        $jobTitle,
+                        $interviewSummary ? " [Interview Schedule:{$interviewSummary}]" : ''
                     ),
                     actionUrl: '/applications',
                     level: 'success',
@@ -172,6 +207,14 @@ class ListOfAppliedApplicantsController extends Controller
                         'post_jobs_id' => $application->post_jobs_id,
                         'job_title' => $application->job?->job_title,
                         'employer_id' => $application->job?->user_id ?? $user->id,
+                        'interview_date' => $validated['interview_date'] ?? null,
+                        'interview_time' => $validated['interview_time'] ?? null,
+                        'interview_type' => $validated['interview_type'] ?? null,
+                        'interview_location' => $validated['interview_location'] ?? null,
+                        'contact_person' => $validated['contact_person'] ?? null,
+                        'contact_phone' => $validated['contact_phone'] ?? null,
+                        'interview_instructions' => $validated['interview_instructions'] ?? null,
+                        'gmail_url' => $gmailWebUrl,
                     ],
                 ));
             } catch (\Throwable $e) {
@@ -189,7 +232,14 @@ class ListOfAppliedApplicantsController extends Controller
                     status: 'approved',
                     remarks: null,
                     employerName: $user->display_name ?? null,
-                    actionUrl: url('/applications')
+                    actionUrl: url('/applications'),
+                    interviewDate: $validated['interview_date'] ?? null,
+                    interviewTime: $validated['interview_time'] ?? null,
+                    interviewType: $validated['interview_type'] ?? null,
+                    interviewLocation: $validated['interview_location'] ?? null,
+                    contactPerson: $validated['contact_person'] ?? null,
+                    contactPhone: $validated['contact_phone'] ?? null,
+                    interviewInstructions: $validated['interview_instructions'] ?? null
                 );
 
                 \App\Models\EmailLog::sendAndLog($applicant, $mailable, [
@@ -200,13 +250,15 @@ class ListOfAppliedApplicantsController extends Controller
                         'application_id' => $application->id,
                         'post_jobs_id' => $application->post_jobs_id,
                         'job_title' => $application->job?->job_title,
+                        'interview_date' => $validated['interview_date'] ?? null,
+                        'interview_time' => $validated['interview_time'] ?? null,
                     ],
                 ]);
             }
         }
 
         return redirect()->route('list-of-applied-applicants.index')
-            ->with('toast', ['type' => 'success', 'message' => 'Application approved. Applicant has been notified via email.']);
+            ->with('toast', ['type' => 'success', 'message' => 'Application approved and interview notification sent to applicant via email!']);
     }
 
     /**
@@ -236,9 +288,13 @@ class ListOfAppliedApplicantsController extends Controller
 
         $applicant = $application->user ?: User::find($application->users_id);
         if ($applicant) {
+            $jobTitle = $application->job?->job_title ?? 'the job';
+            $subjectForSearch = rawurlencode('Update on Your Application for ' . $jobTitle);
+            $gmailWebUrl = "https://mail.google.com/mail/u/0/#search/{$subjectForSearch}";
+
             $message = sprintf(
                 'Your application for "%s" has been declined.',
-                $application->job?->job_title ?? 'the job'
+                $jobTitle
             );
             if (! empty(trim($validated['remarks'] ?? ''))) {
                 $message .= ' Remarks: ' . trim($validated['remarks']);
@@ -257,6 +313,7 @@ class ListOfAppliedApplicantsController extends Controller
                         'job_title' => $application->job?->job_title,
                         'employer_id' => $application->job?->user_id ?? $user->id,
                         'remarks' => $validated['remarks'] ?? null,
+                        'gmail_url' => $gmailWebUrl,
                     ],
                 ));
             } catch (\Throwable $e) {

@@ -1,6 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Bell, Check, Trash2, AlertTriangle } from 'lucide-react';
+import { Bell, Check, Trash2, AlertTriangle, Calendar, Clock, MapPin, ExternalLink, Mail, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppearanceToggle } from '@/components/appearance-tabs';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -55,6 +55,7 @@ export function AppSidebarHeader({
     const [notifLoading, setNotifLoading] = useState(false);
     const [notifItems, setNotifItems] = useState<NotificationItem[]>([]);
     const [unreadCount, setUnreadCount] = useState<number>(unreadNotificationsCount);
+    const [selectedNotice, setSelectedNotice] = useState<NotificationItem | null>(null);
 
     const csrf = useMemo(
         () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '',
@@ -274,7 +275,12 @@ export function AppSidebarHeader({
                                                 if (isUnread) {
                                                     void markRead(n.id);
                                                 }
-                                                if (actionUrl) {
+                                                const notifType = n.data?.type as string | undefined;
+                                                const hasInterviewOrDetails = !!(n.data?.interview_date || n.data?.gmail_url || notifType === 'job_application_status_updated');
+                                                if (hasInterviewOrDetails) {
+                                                    setNotifOpen(false);
+                                                    setSelectedNotice(n);
+                                                } else if (actionUrl) {
                                                     setNotifOpen(false);
                                                     router.visit(actionUrl);
                                                 }
@@ -382,6 +388,168 @@ export function AppSidebarHeader({
                             {isDeleting ? 'Deleting…' : 'Delete'}
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Application Notice & Interview Details Modal */}
+            <Dialog open={!!selectedNotice} onOpenChange={(open) => !open && setSelectedNotice(null)}>
+                <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                    {selectedNotice && (() => {
+                        const data = selectedNotice.data ?? {};
+                        const title = String(data.title ?? 'Notification Notice');
+                        const status = (data.status as string) ?? '';
+                        const jobTitle = (data.job_title as string) ?? 'Applied Position';
+                        const isApproved = status === 'approved' || selectedNotice.data?.level === 'success';
+                        const interviewDate = data.interview_date as string | undefined;
+                        const interviewTime = data.interview_time as string | undefined;
+                        const interviewType = data.interview_type as string | undefined;
+                        const interviewLocation = data.interview_location as string | undefined;
+                        const contactPerson = data.contact_person as string | undefined;
+                        const contactPhone = data.contact_phone as string | undefined;
+                        const interviewInstructions = data.interview_instructions as string | undefined;
+                        const remarks = data.remarks as string | undefined;
+                        const gmailUrl = (data.gmail_url as string | undefined) || `https://mail.google.com/mail/u/0/#search/${encodeURIComponent(jobTitle)}`;
+
+                        return (
+                            <>
+                                <DialogHeader>
+                                    <div className="flex items-center gap-2.5">
+                                        <div className={cn(
+                                            'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
+                                            isApproved ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400'
+                                        )}>
+                                            {isApproved ? <UserCheck className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
+                                        </div>
+                                        <div>
+                                            <DialogTitle className="text-lg">{title}</DialogTitle>
+                                            <DialogDescription>
+                                                Position: <strong className="text-foreground">{jobTitle}</strong>
+                                            </DialogDescription>
+                                        </div>
+                                    </div>
+                                </DialogHeader>
+
+                                <div className="space-y-4 py-2 text-sm">
+                                    <div className={cn(
+                                        'rounded-lg border p-3.5',
+                                        isApproved
+                                            ? 'border-emerald-200 bg-emerald-50/70 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200'
+                                            : 'border-red-200 bg-red-50/70 text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200'
+                                    )}>
+                                        <p className="font-semibold">{String(data.message ?? '')}</p>
+                                    </div>
+
+                                    {/* Interview Schedule Card */}
+                                    {isApproved && (interviewDate || interviewLocation || interviewType) && (
+                                        <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-4 text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                                            <h4 className="flex items-center gap-1.5 font-bold text-amber-900 dark:text-amber-300">
+                                                <Calendar className="h-4 w-4" />
+                                                Interview Schedule & Instructions
+                                            </h4>
+
+                                            <div className="mt-3 space-y-2 text-xs sm:text-sm">
+                                                {interviewDate && (
+                                                    <div className="flex items-start gap-2">
+                                                        <Calendar className="h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400 mt-0.5" />
+                                                        <div>
+                                                            <span className="font-medium text-muted-foreground">Date: </span>
+                                                            <span className="font-semibold">{new Date(interviewDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {interviewTime && (
+                                                    <div className="flex items-start gap-2">
+                                                        <Clock className="h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400 mt-0.5" />
+                                                        <div>
+                                                            <span className="font-medium text-muted-foreground">Time: </span>
+                                                            <span className="font-semibold">{interviewTime}</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {interviewType && (
+                                                    <div className="flex items-start gap-2">
+                                                        <span className="h-2 w-2 rounded-full bg-amber-600 shrink-0 mt-1.5 ml-1" />
+                                                        <div>
+                                                            <span className="font-medium text-muted-foreground">Format: </span>
+                                                            <Badge variant="outline" className="text-xs uppercase bg-amber-100 text-amber-900 border-amber-300">
+                                                                {interviewType.replace('_', ' ')}
+                                                            </Badge>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {interviewLocation && (
+                                                    <div className="flex items-start gap-2">
+                                                        <MapPin className="h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400 mt-0.5" />
+                                                        <div className="break-all">
+                                                            <span className="font-medium text-muted-foreground">Venue / Link: </span>
+                                                            {interviewLocation.startsWith('http://') || interviewLocation.startsWith('https://') ? (
+                                                                <a href={interviewLocation} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 underline dark:text-blue-400 inline-flex items-center gap-1">
+                                                                    {interviewLocation} <ExternalLink className="h-3 w-3" />
+                                                                </a>
+                                                            ) : (
+                                                                <span className="font-medium">{interviewLocation}</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {contactPerson && (
+                                                    <div className="flex items-start gap-2">
+                                                        <span className="font-medium text-muted-foreground ml-6">Contact: </span>
+                                                        <span className="font-semibold">
+                                                            {contactPerson} {contactPhone && `(${contactPhone})`}
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                {interviewInstructions && (
+                                                    <div className="mt-3 border-t border-amber-200/80 pt-2.5 dark:border-amber-800">
+                                                        <div className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400">
+                                                            Instructions:
+                                                        </div>
+                                                        <p className="mt-1 whitespace-pre-wrap text-xs text-amber-900/90 dark:text-amber-200">
+                                                            {interviewInstructions}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Remarks if declined */}
+                                    {remarks && (
+                                        <div className="rounded-lg border border-border bg-muted/40 p-3">
+                                            <div className="text-xs font-semibold uppercase text-muted-foreground">Remarks:</div>
+                                            <p className="mt-1 whitespace-pre-wrap text-xs">{remarks}</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <DialogFooter className="flex-col sm:flex-row gap-2">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setSelectedNotice(null)}
+                                        className="sm:order-1"
+                                    >
+                                        Close
+                                    </Button>
+                                    <a
+                                        href={gmailUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-[#EA4335] px-4 py-2 text-sm font-semibold text-white shadow hover:bg-[#d93025] focus:outline-none sm:order-2"
+                                    >
+                                        <Mail className="h-4 w-4" />
+                                        <span>Open in Gmail</span>
+                                        <ExternalLink className="h-3.5 w-3.5 opacity-80" />
+                                    </a>
+                                </DialogFooter>
+                            </>
+                        );
+                    })()}
                 </DialogContent>
             </Dialog>
         </header>

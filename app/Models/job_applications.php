@@ -18,6 +18,17 @@ class job_applications extends Model
         'description',
         'remarks',
         'status',
+        'interview_date',
+        'interview_time',
+        'interview_type',
+        'interview_location',
+        'contact_person',
+        'contact_phone',
+        'interview_instructions',
+    ];
+
+    protected $casts = [
+        'interview_date' => 'date',
     ];
 
     public function user()

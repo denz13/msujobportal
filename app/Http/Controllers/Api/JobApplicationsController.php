@@ -71,12 +71,28 @@ class JobApplicationsController extends Controller
                     ? trim(($employer->firstname ?? '') . ' ' . ($employer->lastname ?? ''))
                     : null;
 
+                $jobTitle = $job?->job_title ?? 'Applied Job';
+                $subjectForSearch = rawurlencode('Congratulations! Your Application has been Approved - ' . $jobTitle);
+                $gmailWebUrl = "https://mail.google.com/mail/u/0/#search/{$subjectForSearch}";
+
                 return [
                     'id' => $app->id,
                     'status' => $app->status,
                     'description' => $app->description,
+                    'remarks' => $app->remarks,
                     'resume_path' => $app->resume_path,
                     'created_at' => $app->created_at?->toISOString(),
+                    'interview_details' => $app->status === 'approved' && ($app->interview_date || $app->interview_location || $app->interview_type) ? [
+                        'date' => $app->interview_date?->format('Y-m-d'),
+                        'date_formatted' => $app->interview_date?->format('F j, Y (l)'),
+                        'time' => $app->interview_time,
+                        'type' => $app->interview_type,
+                        'location' => $app->interview_location,
+                        'contact_person' => $app->contact_person,
+                        'contact_phone' => $app->contact_phone,
+                        'instructions' => $app->interview_instructions,
+                        'gmail_url' => $gmailWebUrl,
+                    ] : null,
                     'job' => $job ? [
                         'id' => $job->id,
                         'job_title' => $job->job_title,

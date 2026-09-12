@@ -1,5 +1,5 @@
-import { Link, usePage } from '@inertiajs/react';
-import { useMemo } from 'react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { useEffect, useMemo, useRef } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
 import {
@@ -30,6 +30,52 @@ export default function AppLayout({
         auth: Auth;
         employerProfile?: EmployerProfileShared;
     };
+
+    // Quiet background auto-polling (seamless, invisible refresh without reload flicker or scroll jump)
+    const isInteracting = useRef(false);
+
+    useEffect(() => {
+        const handleUserAction = () => {
+            isInteracting.current = true;
+            // reset interaction flag after a short delay
+            setTimeout(() => {
+                isInteracting.current = false;
+            }, 3000);
+        };
+
+        window.addEventListener('keydown', handleUserAction, { passive: true });
+        window.addEventListener('input', handleUserAction, { passive: true });
+
+        // Auto-poll every 12 seconds
+        const pollInterval = window.setInterval(() => {
+            // Only poll if tab is visible and user is not actively typing in an input
+            if (document.hidden || isInteracting.current) {
+                return;
+            }
+
+            const activeElement = document.activeElement;
+            const isTyping = activeElement && (
+                activeElement.tagName === 'INPUT' ||
+                activeElement.tagName === 'TEXTAREA' ||
+                (activeElement as HTMLElement).isContentEditable
+            );
+
+            if (isTyping) {
+                return;
+            }
+
+            // Silent Inertia partial reload: router.reload() automatically preserves scroll and state
+            router.reload({
+                showProgress: false,
+            });
+        }, 12000);
+
+        return () => {
+            window.removeEventListener('keydown', handleUserAction);
+            window.removeEventListener('input', handleUserAction);
+            window.clearInterval(pollInterval);
+        };
+    }, []);
 
     const mustCompleteEmployerProfile = useMemo(() => {
         if (!auth?.user) return false;

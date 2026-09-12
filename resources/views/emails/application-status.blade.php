@@ -214,6 +214,72 @@
                     </tr>
                 </table>
 
+                @if($status === 'approved' && (!empty($interviewDate) || !empty($interviewLocation) || !empty($interviewType)))
+                    <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 18px; margin: 24px 0;">
+                        <div style="font-size: 16px; font-weight: 700; color: #92400e; margin-bottom: 12px; display: flex; align-items: center;">
+                            📅 Interview Schedule & Important Details
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                            @if(!empty($interviewDate))
+                            <tr>
+                                <td style="padding: 6px 0; color: #78350f; font-weight: 600; width: 38%;">Interview Date:</td>
+                                <td style="padding: 6px 0; color: #1c1917; font-weight: 700;">{{ \Carbon\Carbon::parse($interviewDate)->format('F j, Y (l)') }}</td>
+                            </tr>
+                            @endif
+                            @if(!empty($interviewTime))
+                            <tr>
+                                <td style="padding: 6px 0; color: #78350f; font-weight: 600;">Interview Time:</td>
+                                <td style="padding: 6px 0; color: #1c1917; font-weight: 700;">{{ $interviewTime }}</td>
+                            </tr>
+                            @endif
+                            @if(!empty($interviewType))
+                            <tr>
+                                <td style="padding: 6px 0; color: #78350f; font-weight: 600;">Interview Format:</td>
+                                <td style="padding: 6px 0; color: #1c1917;">
+                                    <span style="display: inline-block; background-color: #fef3c7; color: #b45309; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; text-transform: uppercase;">
+                                        {{ str_replace('_', ' ', $interviewType) }}
+                                    </span>
+                                </td>
+                            </tr>
+                            @endif
+                            @if(!empty($interviewLocation))
+                            <tr>
+                                <td style="padding: 6px 0; color: #78350f; font-weight: 600;">Venue / Meeting Link:</td>
+                                <td style="padding: 6px 0; color: #1c1917; word-break: break-word;">
+                                    @if(str_starts_with(trim($interviewLocation), 'http://') || str_starts_with(trim($interviewLocation), 'https://'))
+                                        <a href="{{ trim($interviewLocation) }}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: 600;">
+                                            {{ trim($interviewLocation) }}
+                                        </a>
+                                    @else
+                                        {{ $interviewLocation }}
+                                    @endif
+                                </td>
+                            </tr>
+                            @endif
+                            @if(!empty($contactPerson))
+                            <tr>
+                                <td style="padding: 6px 0; color: #78350f; font-weight: 600;">Contact Person:</td>
+                                <td style="padding: 6px 0; color: #1c1917;">
+                                    <strong>{{ $contactPerson }}</strong>
+                                    @if(!empty($contactPhone))
+                                        ({{ $contactPhone }})
+                                    @endif
+                                </td>
+                            </tr>
+                            @endif
+                        </table>
+
+                        @if(!empty($interviewInstructions))
+                            <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed #fde68a;">
+                                <div style="font-size: 13px; font-weight: 700; color: #92400e; text-transform: uppercase; margin-bottom: 4px;">
+                                    Applicant Instructions:
+                                </div>
+                                <p style="font-size: 13px; color: #451a03; margin: 0; line-height: 1.5; white-space: pre-wrap;">{{ $interviewInstructions }}</p>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
                 @if(!empty($remarks))
                     <div class="remarks-box">
                         <div class="remarks-label">Remarks / Note from Employer:</div>

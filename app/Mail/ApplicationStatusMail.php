@@ -19,7 +19,14 @@ class ApplicationStatusMail extends Mailable
         public string $status, // 'approved' or 'declined'
         public ?string $remarks = null,
         public ?string $employerName = null,
-        public ?string $actionUrl = null
+        public ?string $actionUrl = null,
+        public ?string $interviewDate = null,
+        public ?string $interviewTime = null,
+        public ?string $interviewType = null,
+        public ?string $interviewLocation = null,
+        public ?string $contactPerson = null,
+        public ?string $contactPhone = null,
+        public ?string $interviewInstructions = null
     ) {}
 
     /**

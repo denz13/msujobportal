@@ -138,6 +138,16 @@ export default function ListOfAppliedApplicants({
     const [declineRemarks, setDeclineRemarks] = useState('');
     const [isProcessingApprove, setIsProcessingApprove] = useState(false);
     const [isProcessingDecline, setIsProcessingDecline] = useState(false);
+
+    // Interview Details Form State
+    const [interviewDate, setInterviewDate] = useState('');
+    const [interviewTime, setInterviewTime] = useState('');
+    const [interviewType, setInterviewType] = useState('face-to-face');
+    const [interviewLocation, setInterviewLocation] = useState('');
+    const [contactPerson, setContactPerson] = useState('');
+    const [contactPhone, setContactPhone] = useState('');
+    const [interviewInstructions, setInterviewInstructions] = useState('');
+
     const [searchQuery, setSearchQuery] = useState(filters.search ?? '');
     const [statusFilter, setStatusFilter] = useState(filters.status ?? 'all');
     const isInitialMount = useRef(true);
@@ -170,15 +180,34 @@ export default function ListOfAppliedApplicants({
         setResumeModalOpen(true);
     }
 
+    function resetApproveForm() {
+        setApproveConfirm(null);
+        setInterviewDate('');
+        setInterviewTime('');
+        setInterviewType('face-to-face');
+        setInterviewLocation('');
+        setContactPerson('');
+        setContactPhone('');
+        setInterviewInstructions('');
+    }
+
     function handleApproveConfirm() {
         if (!approveConfirm || isProcessingApprove) return;
         const id = approveConfirm.id;
         setIsProcessingApprove(true);
-        router.patch(`/applicants/list-of-applied-applicants/${id}/approve`, {}, {
+        router.patch(`/applicants/list-of-applied-applicants/${id}/approve`, {
+            interview_date: interviewDate || undefined,
+            interview_time: interviewTime.trim() || undefined,
+            interview_type: interviewType || undefined,
+            interview_location: interviewLocation.trim() || undefined,
+            contact_person: contactPerson.trim() || undefined,
+            contact_phone: contactPhone.trim() || undefined,
+            interview_instructions: interviewInstructions.trim() || undefined,
+        }, {
             preserveScroll: true,
             onSuccess: () => {
-                toast.success('Application approved. Email notification sent!');
-                setApproveConfirm(null);
+                toast.success('Application approved. Interview notification and email sent!');
+                resetApproveForm();
             },
             onError: () => toast.error('Failed to approve application.'),
             onFinish: () => setIsProcessingApprove(false),
@@ -580,22 +609,143 @@ export default function ListOfAppliedApplicants({
                     </DialogContent>
                 </Dialog>
 
-                <Dialog open={!!approveConfirm} onOpenChange={(open) => { if (!open && !isProcessingApprove) setApproveConfirm(null); }}>
-                    <DialogContent>
+                <Dialog open={!!approveConfirm} onOpenChange={(open) => { if (!open && !isProcessingApprove) resetApproveForm(); }}>
+                    <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle>Approve application</DialogTitle>
+                            <DialogTitle className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+                                <CheckCircle2 className="h-5 w-5" />
+                                Approve Application & Set Interview Schedule
+                            </DialogTitle>
                             <DialogDescription>
-                                Are you sure you want to approve this application? An approval notification email will be automatically sent to the applicant.
+                                Set the interview schedule and instructions for{' '}
+                                <strong className="text-foreground">{approveConfirm?.jobseeker?.display_name}</strong>.
+                                A notification and email with a direct Gmail link will be automatically sent to the applicant.
                             </DialogDescription>
                         </DialogHeader>
+
+                        <div className="space-y-4 py-2 text-left">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <Label htmlFor="interview_date" className="text-xs font-semibold">
+                                        Interview Date <span className="text-muted-foreground font-normal">(Optional)</span>
+                                    </Label>
+                                    <Input
+                                        id="interview_date"
+                                        type="date"
+                                        disabled={isProcessingApprove}
+                                        value={interviewDate}
+                                        onChange={(e) => setInterviewDate(e.target.value)}
+                                        className="mt-1"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="interview_time" className="text-xs font-semibold">
+                                        Interview Time <span className="text-muted-foreground font-normal">(Optional)</span>
+                                    </Label>
+                                    <Input
+                                        id="interview_time"
+                                        type="text"
+                                        placeholder="e.g. 10:00 AM"
+                                        disabled={isProcessingApprove}
+                                        value={interviewTime}
+                                        onChange={(e) => setInterviewTime(e.target.value)}
+                                        className="mt-1"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <Label htmlFor="interview_type" className="text-xs font-semibold">
+                                        Interview Format
+                                    </Label>
+                                    <Select
+                                        value={interviewType}
+                                        onValueChange={setInterviewType}
+                                        disabled={isProcessingApprove}
+                                    >
+                                        <SelectTrigger id="interview_type" className="mt-1">
+                                            <SelectValue placeholder="Select type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="face-to-face">Face-to-Face (On-site)</SelectItem>
+                                            <SelectItem value="virtual">Online (Google Meet / Zoom)</SelectItem>
+                                            <SelectItem value="phone">Phone Call</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label htmlFor="interview_location" className="text-xs font-semibold">
+                                        {interviewType === 'virtual' ? 'Meeting Link (Meet / Zoom)' : 'Location / Office Address'}
+                                    </Label>
+                                    <Input
+                                        id="interview_location"
+                                        type="text"
+                                        placeholder={interviewType === 'virtual' ? 'https://meet.google.com/...' : 'e.g. HR Dept, 2nd Floor Admin Bldg'}
+                                        disabled={isProcessingApprove}
+                                        value={interviewLocation}
+                                        onChange={(e) => setInterviewLocation(e.target.value)}
+                                        className="mt-1"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <Label htmlFor="contact_person" className="text-xs font-semibold">
+                                        Contact Person / Interviewer
+                                    </Label>
+                                    <Input
+                                        id="contact_person"
+                                        type="text"
+                                        placeholder="e.g. Juan Dela Cruz (HR Head)"
+                                        disabled={isProcessingApprove}
+                                        value={contactPerson}
+                                        onChange={(e) => setContactPerson(e.target.value)}
+                                        className="mt-1"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="contact_phone" className="text-xs font-semibold">
+                                        Contact Phone / Mobile
+                                    </Label>
+                                    <Input
+                                        id="contact_phone"
+                                        type="text"
+                                        placeholder="e.g. 09123456789"
+                                        disabled={isProcessingApprove}
+                                        value={contactPhone}
+                                        onChange={(e) => setContactPhone(e.target.value)}
+                                        className="mt-1"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <Label htmlFor="interview_instructions" className="text-xs font-semibold">
+                                    Instructions for Applicant <span className="text-muted-foreground font-normal">(Requirements, dress code, etc.)</span>
+                                </Label>
+                                <textarea
+                                    id="interview_instructions"
+                                    rows={3}
+                                    placeholder="e.g. Please wear formal/corporate attire. Bring 2 copies of your updated resume, transcript of records, and valid ID."
+                                    disabled={isProcessingApprove}
+                                    value={interviewInstructions}
+                                    onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setInterviewInstructions(e.target.value)}
+                                    className="mt-1 flex w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    maxLength={2000}
+                                />
+                            </div>
+                        </div>
+
                         {isProcessingApprove && (
                             <div className="flex items-center gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
                                 <Loader2 className="h-4 w-4 animate-spin text-emerald-600 dark:text-emerald-400" />
-                                <span>Sending approval email to applicant...</span>
+                                <span>Sending approval email with interview details to applicant...</span>
                             </div>
                         )}
-                        <DialogFooter>
-                            <Button variant="outline" disabled={isProcessingApprove} onClick={() => setApproveConfirm(null)}>
+                        <DialogFooter className="gap-2 sm:gap-0">
+                            <Button variant="outline" disabled={isProcessingApprove} onClick={resetApproveForm}>
                                 Cancel
                             </Button>
                             <Button
@@ -611,7 +761,7 @@ export default function ListOfAppliedApplicants({
                                 ) : (
                                     <>
                                         <Mail className="h-4 w-4" />
-                                        <span>Approve & Send Email</span>
+                                        <span>Approve & Send Notice</span>
                                     </>
                                 )}
                             </Button>

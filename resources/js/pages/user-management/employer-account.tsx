@@ -151,8 +151,6 @@ export default function EmployerAccount({
     const [employerToAction, setEmployerToAction] = useState<Employer | null>(null);
     const [updateModalOpen, setUpdateModalOpen] = useState(false);
     const [employerToUpdate, setEmployerToUpdate] = useState<Employer | null>(null);
-    const [updateSelectedBusinessType, setUpdateSelectedBusinessType] = useState<string>('');
-    const [updateCustomBusinessType, setUpdateCustomBusinessType] = useState<string>('');
     const [isUpdateSubmitting, setIsUpdateSubmitting] = useState(false);
     const [permitPreviewOpen, setPermitPreviewOpen] = useState(false);
     const [permitPreviewUrl, setPermitPreviewUrl] = useState<string | null>(null);
@@ -162,22 +160,6 @@ export default function EmployerAccount({
 
     const openUpdateModal = (employer: Employer) => {
         setEmployerToUpdate(employer);
-        const currentType = employer.employer_information?.type_of_business ?? '';
-        if (!currentType) {
-            setUpdateSelectedBusinessType('');
-            setUpdateCustomBusinessType('');
-        } else {
-            const isKnown = categories.some(
-                (c) => c.name.toLowerCase() === currentType.toLowerCase(),
-            );
-            if (isKnown) {
-                setUpdateSelectedBusinessType(currentType);
-                setUpdateCustomBusinessType('');
-            } else {
-                setUpdateSelectedBusinessType('others');
-                setUpdateCustomBusinessType(currentType);
-            }
-        }
         setUpdateModalOpen(true);
     };
 
@@ -931,19 +913,6 @@ export default function EmployerAccount({
                                                 <dl className="space-y-3 sm:space-y-4">
                                                     <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
                                                         <dt className="text-xs sm:text-sm font-medium text-muted-foreground sm:min-w-[140px] md:min-w-[160px] shrink-0 flex items-center gap-2">
-                                                            <User className="size-3 sm:size-4 shrink-0" />
-                                                            <span>Position</span>
-                                                        </dt>
-                                                        <dd className="text-xs sm:text-sm font-medium flex-1 break-words min-w-0">
-                                                            {
-                                                                selectedEmployer
-                                                                    .employer_information
-                                                                    .position
-                                                            }
-                                                        </dd>
-                                                    </div>
-                                                    <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
-                                                        <dt className="text-xs sm:text-sm font-medium text-muted-foreground sm:min-w-[140px] md:min-w-[160px] shrink-0 flex items-center gap-2">
                                                             <Phone className="size-3 sm:size-4 shrink-0" />
                                                             <span>Contact number</span>
                                                         </dt>
@@ -1003,29 +972,6 @@ export default function EmployerAccount({
                                                             ) : (
                                                                 <span className="text-muted-foreground">None</span>
                                                             )}
-                                                        </dd>
-                                                    </div>
-                                                    <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
-                                                        <dt className="text-xs sm:text-sm font-medium text-muted-foreground sm:min-w-[140px] md:min-w-[160px] shrink-0">
-                                                            TIN
-                                                        </dt>
-                                                        <dd className="text-xs sm:text-sm font-medium flex-1 break-words min-w-0">
-                                                            {
-                                                                selectedEmployer
-                                                                    .employer_information.tin
-                                                            }
-                                                        </dd>
-                                                    </div>
-                                                    <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
-                                                        <dt className="text-xs sm:text-sm font-medium text-muted-foreground sm:min-w-[140px] md:min-w-[160px] shrink-0">
-                                                            Type of business
-                                                        </dt>
-                                                        <dd className="text-xs sm:text-sm font-medium flex-1 break-words min-w-0">
-                                                            {
-                                                                selectedEmployer
-                                                                    .employer_information
-                                                                    .type_of_business
-                                                            }
                                                         </dd>
                                                     </div>
                                                     {selectedEmployer.employer_information
@@ -1119,20 +1065,6 @@ export default function EmployerAccount({
                                             <input type="hidden" name="_method" value="PUT" />
 
                                             <div className="grid gap-2">
-                                                <Label htmlFor="update-position">Position</Label>
-                                                <Input
-                                                    id="update-position"
-                                                    name="position"
-                                                    required
-                                                    defaultValue={
-                                                        employerToUpdate.employer_information?.position ?? ''
-                                                    }
-                                                    placeholder="e.g. HR Manager"
-                                                />
-                                                <InputError message={formErrors.position} />
-                                            </div>
-
-                                            <div className="grid gap-2">
                                                 <Label htmlFor="update-contact_number">Contact number</Label>
                                                 <Input
                                                     id="update-contact_number"
@@ -1172,71 +1104,6 @@ export default function EmployerAccount({
                                                     placeholder="Permit / reference number"
                                                 />
                                                 <InputError message={formErrors.business_permit} />
-                                            </div>
-
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="update-tin">TIN</Label>
-                                                <Input
-                                                    id="update-tin"
-                                                    name="tin"
-                                                    required
-                                                    defaultValue={employerToUpdate.employer_information?.tin ?? ''}
-                                                    placeholder="Tax Identification Number"
-                                                />
-                                                <InputError message={formErrors.tin} />
-                                            </div>
-
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="update-type_of_business">Type of business</Label>
-                                                <Select
-                                                    value={updateSelectedBusinessType}
-                                                    onValueChange={(val) => {
-                                                        setUpdateSelectedBusinessType(val);
-                                                        if (val !== 'others') {
-                                                            setUpdateCustomBusinessType('');
-                                                        }
-                                                    }}
-                                                >
-                                                    <SelectTrigger id="update-type_of_business" className="w-full">
-                                                        <SelectValue placeholder="Select type of business" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {categories.map((c) => (
-                                                            <SelectItem key={c.id} value={c.name}>
-                                                                {c.name}
-                                                            </SelectItem>
-                                                        ))}
-                                                        <SelectItem value="others">
-                                                            Others (Please specify)
-                                                        </SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-
-                                                {updateSelectedBusinessType === 'others' && (
-                                                    <div className="mt-1.5 space-y-1">
-                                                        <Label htmlFor="update-custom_type_of_business" className="text-xs text-muted-foreground">
-                                                            Please specify type of business <span className="text-destructive">*</span>
-                                                        </Label>
-                                                        <Input
-                                                            id="update-custom_type_of_business"
-                                                            required
-                                                            value={updateCustomBusinessType}
-                                                            onChange={(e) => setUpdateCustomBusinessType(e.target.value)}
-                                                            placeholder="e.g. Retail, Healthcare Services, etc."
-                                                        />
-                                                    </div>
-                                                )}
-
-                                                <input
-                                                    type="hidden"
-                                                    name="type_of_business"
-                                                    value={
-                                                        updateSelectedBusinessType === 'others'
-                                                            ? updateCustomBusinessType
-                                                            : updateSelectedBusinessType
-                                                    }
-                                                />
-                                                <InputError message={formErrors.type_of_business} />
                                             </div>
 
                                             <DialogFooter className="gap-2 sm:gap-0 pt-4">

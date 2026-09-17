@@ -93,7 +93,7 @@ export default function PostJobs() {
         jobs?: Job[];
         categories?: { id: number; name: string }[];
         errors?: Record<string, string>;
-        filters?: { search?: string; status?: string };
+        filters?: { search?: string; status?: string; category?: string };
         uniqueStatuses?: string[];
         pagination?: {
             links: PaginationLink[];
@@ -122,6 +122,7 @@ export default function PostJobs() {
     const [dropzoneKey, setDropzoneKey] = useState(0);
     const [searchQuery, setSearchQuery] = useState(filters.search ?? '');
     const [statusFilter, setStatusFilter] = useState(filters.status ?? 'all');
+    const [categoryFilter, setCategoryFilter] = useState(filters.category ?? 'all');
     const photoInputRef = useRef<HTMLInputElement>(null);
     const flashShown = useRef(false);
     const isInitialMount = useRef(true);
@@ -223,11 +224,12 @@ export default function PostJobs() {
             router.get(postJobsIndex.url(), {
                 search: searchQuery || undefined,
                 status: statusFilter !== 'all' ? statusFilter : undefined,
+                category: categoryFilter !== 'all' ? categoryFilter : undefined,
                 page: 1,
             }, { preserveState: true, preserveScroll: true, replace: true });
         }, 300);
         return () => clearTimeout(t);
-    }, [searchQuery, statusFilter]);
+    }, [searchQuery, statusFilter, categoryFilter]);
 
     const isNotAvailable = (status: string | null | undefined) =>
         String(status ?? '').toLowerCase().replace(/-/g, '_') === 'not_available';
@@ -287,6 +289,17 @@ export default function PostJobs() {
         router.get(postJobsIndex.url(), {
             search: searchQuery || undefined,
             status: value !== 'all' ? value : undefined,
+            category: categoryFilter !== 'all' ? categoryFilter : undefined,
+            page: 1,
+        }, { preserveState: true, preserveScroll: true, replace: true });
+    };
+
+    const handleCategoryFilterChange = (value: string) => {
+        setCategoryFilter(value);
+        router.get(postJobsIndex.url(), {
+            search: searchQuery || undefined,
+            status: statusFilter !== 'all' ? statusFilter : undefined,
+            category: value !== 'all' ? value : undefined,
             page: 1,
         }, { preserveState: true, preserveScroll: true, replace: true });
     };
@@ -319,8 +332,8 @@ export default function PostJobs() {
                 </div>
 
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-1 flex-col gap-4 sm:flex-row sm:items-center">
-                        <div className="relative flex-1 sm:max-w-xs">
+                    <div className="flex flex-1 flex-wrap gap-4 items-center">
+                        <div className="relative flex-1 min-w-[200px] sm:max-w-xs">
                             <label htmlFor="search" className="sr-only">Search jobs</label>
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
@@ -336,16 +349,32 @@ export default function PostJobs() {
                             <label htmlFor="status-filter" className="sr-only">Filter by status</label>
                             <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
                                 <SelectTrigger id="status-filter" className="w-full">
-                                <SelectValue placeholder="All Status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Status</SelectItem>
-                                {uniqueStatuses.map((s) => (
-                                    <SelectItem key={s} value={s}>
-                                        <span className="capitalize">{s}</span>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
+                                    <SelectValue placeholder="All Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Status</SelectItem>
+                                    {uniqueStatuses.map((s) => (
+                                        <SelectItem key={s} value={s}>
+                                            <span className="capitalize">{s}</span>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="w-full sm:w-[200px]">
+                            <label htmlFor="category-filter" className="sr-only">Filter by category</label>
+                            <Select value={categoryFilter} onValueChange={handleCategoryFilterChange}>
+                                <SelectTrigger id="category-filter" className="w-full">
+                                    <SelectValue placeholder="All Categories" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Categories</SelectItem>
+                                    {categories.map((c) => (
+                                        <SelectItem key={c.id} value={c.name}>
+                                            {c.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
                             </Select>
                         </div>
                     </div>

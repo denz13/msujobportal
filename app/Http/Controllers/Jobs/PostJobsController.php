@@ -24,6 +24,7 @@ class PostJobsController extends Controller
         $perPage = $request->get('per_page', 10);
         $search = $request->get('search', '');
         $status = $request->get('status', 'all');
+        $category = $request->get('category', 'all');
 
         $query = post_jobs::query()->orderByDesc('created_at');
 
@@ -41,6 +42,10 @@ class PostJobsController extends Controller
 
         if ($status !== 'all') {
             $query->where('status', $status);
+        }
+
+        if ($category !== 'all' && $category !== '') {
+            $query->where('job_category', $category);
         }
 
         $paginator = $query->paginate($perPage)->withQueryString();
@@ -80,6 +85,7 @@ class PostJobsController extends Controller
             'filters' => [
                 'search' => $search,
                 'status' => $status,
+                'category' => $category,
             ],
             'uniqueStatuses' => $uniqueStatuses,
             'pagination' => [

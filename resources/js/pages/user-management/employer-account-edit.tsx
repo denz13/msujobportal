@@ -1,5 +1,4 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { useState } from 'react';
 import { toast } from 'sonner';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -7,13 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -39,28 +31,10 @@ type EmployerInformation = {
 export default function EmployerAccountEdit({
     employer,
     employerInformation,
-    categories = [],
 }: {
     employer: Employer;
     employerInformation?: EmployerInformation | null;
-    categories?: Array<{ id: number; name: string }>;
 }) {
-    const currentBusinessType = employerInformation?.type_of_business ?? '';
-    const isKnownCategory = currentBusinessType
-        ? categories.some(
-              (c) => c.name.toLowerCase() === currentBusinessType.toLowerCase(),
-          )
-        : false;
-
-    const [selectedBusinessType, setSelectedBusinessType] = useState<string>(() => {
-        if (!currentBusinessType) return '';
-        return isKnownCategory ? currentBusinessType : 'others';
-    });
-
-    const [customBusinessType, setCustomBusinessType] = useState<string>(() => {
-        if (!currentBusinessType) return '';
-        return isKnownCategory ? '' : currentBusinessType;
-    });
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Employer Accounts',
@@ -102,20 +76,6 @@ export default function EmployerAccountEdit({
                             {({ processing, errors }) => (
                                 <>
                                     <input type="hidden" name="_method" value="PUT" />
-
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="position">Position</Label>
-                                        <Input
-                                            id="position"
-                                            name="position"
-                                            required
-                                            defaultValue={
-                                                employerInformation?.position ?? ''
-                                            }
-                                            placeholder="e.g. HR Manager"
-                                        />
-                                        <InputError message={errors.position} />
-                                    </div>
 
                                     <div className="grid gap-2">
                                         <Label htmlFor="contact_number">
@@ -166,79 +126,6 @@ export default function EmployerAccountEdit({
                                             placeholder="Permit / reference number"
                                         />
                                         <InputError message={errors.business_permit} />
-                                    </div>
-
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="tin">TIN</Label>
-                                        <Input
-                                            id="tin"
-                                            name="tin"
-                                            required
-                                            defaultValue={employerInformation?.tin ?? ''}
-                                            placeholder="Tax Identification Number"
-                                        />
-                                        <InputError message={errors.tin} />
-                                    </div>
-
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="type_of_business">
-                                            Type of business
-                                        </Label>
-                                        <Select
-                                            value={selectedBusinessType}
-                                            onValueChange={(val) => {
-                                                setSelectedBusinessType(val);
-                                                if (val !== 'others') {
-                                                    setCustomBusinessType('');
-                                                }
-                                            }}
-                                        >
-                                            <SelectTrigger id="type_of_business" className="w-full">
-                                                <SelectValue placeholder="Select type of business" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {categories.map((c) => (
-                                                    <SelectItem key={c.id} value={c.name}>
-                                                        {c.name}
-                                                    </SelectItem>
-                                                ))}
-                                                <SelectItem value="others">
-                                                    Others (Please specify)
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-
-                                        {selectedBusinessType === 'others' && (
-                                            <div className="mt-1.5 space-y-1">
-                                                <Label
-                                                    htmlFor="custom_type_of_business"
-                                                    className="text-xs text-muted-foreground"
-                                                >
-                                                    Please specify type of business{' '}
-                                                    <span className="text-destructive">*</span>
-                                                </Label>
-                                                <Input
-                                                    id="custom_type_of_business"
-                                                    required
-                                                    value={customBusinessType}
-                                                    onChange={(e) =>
-                                                        setCustomBusinessType(e.target.value)
-                                                    }
-                                                    placeholder="e.g. Retail, Healthcare Services, etc."
-                                                />
-                                            </div>
-                                        )}
-
-                                        <input
-                                            type="hidden"
-                                            name="type_of_business"
-                                            value={
-                                                selectedBusinessType === 'others'
-                                                    ? customBusinessType
-                                                    : selectedBusinessType
-                                            }
-                                        />
-                                        <InputError message={errors.type_of_business} />
                                     </div>
 
                                     <div className="flex items-center gap-2">

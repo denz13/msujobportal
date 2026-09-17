@@ -112,6 +112,83 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('jobs/post-jobs/{id}', [PostJobsController::class, 'update'])->name('post-jobs.update');
     Route::patch('jobs/post-jobs/{id}/availability', [PostJobsController::class, 'updateAvailability'])->name('post-jobs.availability');
     Route::delete('jobs/post-jobs/{id}', [PostJobsController::class, 'destroy'])->name('post-jobs.destroy');
+    Route::get('employer/dashboard-items', function (\Illuminate\Http\Request $request) {
+        $user = Auth::user();
+        if (! $user || $user->role !== 'employer') {
+            abort(403);
+        }
+
+        $type = $request->get('type', 'jobs');
+        $status = $request->get('status', 'all');
+
+        if ($type === 'jobs') {
+            $query = post_jobs::query()->where('user_id', $user->id);
+            if ($status !== 'all' && $status !== '') {
+                $query->where('status', $status);
+            }
+            $jobs = $query->orderByDesc('created_at')->get();
+            return response()->json([
+                'type' => 'jobs',
+                'items' => $jobs->map(fn ($j) => [
+                    'id' => $j->id,
+                    'title' => $j->job_title,
+                    'category' => $j->job_category ?? '—',
+                    'location' => $j->location ?? '—',
+                    'vacancies' => $j->number_of_vacancies ?? 1,
+                    'status' => $j->status ?? 'pending',
+                    'created_at' => $j->created_at?->format('c') ?? null,
+                ]),
+            ]);
+        }
+
+        if ($type === 'jobseekers') {
+            $applications = job_applications::whereHas('job', fn ($q) => $q->where('user_id', $user->id))
+                ->with(['user:id,firstname,lastname,email,photo'])
+                ->orderByDesc('created_at')
+                ->get();
+
+            $uniqueJobseekers = $applications->unique('users_id')->map(fn ($a) => [
+                'id' => $a->user?->id ?? $a->id,
+                'name' => $a->user?->display_name ?? '—',
+                'email' => $a->user?->email ?? '—',
+                'photo' => $a->user?->photo ?? null,
+                'last_applied' => $a->created_at?->format('c') ?? null,
+            ])->values();
+
+            return response()->json([
+                'type' => 'jobseekers',
+                'items' => $uniqueJobseekers,
+            ]);
+        }
+
+        if ($type === 'applications') {
+            $query = job_applications::whereHas('job', fn ($q) => $q->where('user_id', $user->id))
+                ->with(['user:id,firstname,lastname,email,photo', 'job:id,job_title']);
+
+            if ($status !== 'all' && $status !== '') {
+                $query->where('status', $status);
+            }
+
+            $applications = $query->orderByDesc('created_at')->get();
+            return response()->json([
+                'type' => 'applications',
+                'items' => $applications->map(fn ($a) => [
+                    'id' => $a->id,
+                    'jobseeker' => [
+                        'display_name' => $a->user?->display_name ?? '',
+                        'email' => $a->user?->email ?? '',
+                        'photo' => $a->user?->photo ?? null,
+                    ],
+                    'job_title' => $a->job?->job_title ?? '',
+                    'applied_at' => $a->created_at?->format('c') ?? null,
+                    'status' => $a->status ?? null,
+                ]),
+            ]);
+        }
+
+        return response()->json(['items' => []]);
+    })->name('employer.dashboard-items');
+
     Route::get('employer-applicants/{user}', function (User $user) {
         if ($user->role !== 'employer') {
             abort(404);

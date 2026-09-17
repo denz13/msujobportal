@@ -37,12 +37,9 @@ class employer_information extends Model
     public function isComplete(): bool
     {
         $requiredFields = [
-            'position',
             'contact_number',
             'business_address',
             'business_permit',
-            'tin',
-            'type_of_business',
         ];
 
         foreach ($requiredFields as $field) {

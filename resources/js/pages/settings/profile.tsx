@@ -811,56 +811,33 @@ export default function Profile({
                                                 </Alert>
                                             )}
 
-                                            <div className="grid gap-4 md:grid-cols-2">
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="position">
-                                                        Position
-                                                    </Label>
-                                                    <Input
-                                                        id="position"
-                                                        className="mt-1 block w-full"
-                                                        defaultValue={
-                                                            employerInformation
-                                                                ?.position ?? ''
-                                                        }
-                                                        name="position"
-                                                        placeholder="e.g. HR Manager"
-                                                        disabled={employerInformation?.status === 'pending' || employerInformation?.status === 'approved'}
-                                                    />
-                                                    <InputError
-                                                        className="mt-2"
-                                                        message={errors.position}
-                                                    />
-                                                </div>
-
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="contact_number">
-                                                        Contact number
-                                                    </Label>
-                                                    <Input
-                                                        id="contact_number"
-                                                        className="mt-1 block w-full"
-                                                        defaultValue={
-                                                            employerInformation
-                                                                ?.contact_number ??
-                                                            ''
-                                                        }
-                                                        name="contact_number"
-                                                        placeholder="e.g. 09xxxxxxxxx"
-                                                        disabled={employerInformation?.status === 'pending' || employerInformation?.status === 'approved'}
-                                                    />
-                                                    <InputError
-                                                        className="mt-2"
-                                                        message={
-                                                            errors.contact_number
-                                                        }
-                                                    />
-                                                </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="contact_number">
+                                                    Contact number
+                                                </Label>
+                                                <Input
+                                                    id="contact_number"
+                                                    className="mt-1 block w-full"
+                                                    defaultValue={
+                                                        employerInformation
+                                                            ?.contact_number ??
+                                                        ''
+                                                    }
+                                                    name="contact_number"
+                                                    placeholder="e.g. 09xxxxxxxxx"
+                                                    disabled={employerInformation?.status === 'pending' || employerInformation?.status === 'approved'}
+                                                />
+                                                <InputError
+                                                    className="mt-2"
+                                                    message={
+                                                        errors.contact_number
+                                                    }
+                                                />
                                             </div>
 
                                             <div className="grid gap-2">
                                                 <Label htmlFor="business_address">
-                                                    Business address
+                                                    Business address / Location
                                                 </Label>
                                                 <Input
                                                     id="business_address"
@@ -871,7 +848,7 @@ export default function Profile({
                                                         ''
                                                     }
                                                     name="business_address"
-                                                    placeholder="Business address"
+                                                    placeholder="Business address or location"
                                                     disabled={employerInformation?.status === 'pending' || employerInformation?.status === 'approved'}
                                                 />
                                                 <InputError
@@ -882,146 +859,51 @@ export default function Profile({
                                                 />
                                             </div>
 
-                                            <div className="grid gap-2 md:grid-cols-2 md:gap-4">
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="business_permit">
-                                                        Business permit
-                                                    </Label>
-                                                    <div className="space-y-2">
-                                                        {businessPermitPreview && (
-                                                            <div className="relative w-full h-32 border rounded-md overflow-hidden bg-muted/50">
-                                                                {businessPermitPreview.endsWith('.pdf') || businessPermitPreview.includes('application/pdf') ? (
-                                                                    <div className="flex items-center justify-center h-full">
-                                                                        <div className="text-center">
-                                                                            <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                                                                            <span className="text-sm text-muted-foreground">PDF File</span>
-                                                                        </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="business_permit">
+                                                    Business permit
+                                                </Label>
+                                                <div className="space-y-2">
+                                                    {businessPermitPreview && (
+                                                        <div className="relative w-full h-32 border rounded-md overflow-hidden bg-muted/50">
+                                                            {businessPermitPreview.endsWith('.pdf') || businessPermitPreview.includes('application/pdf') ? (
+                                                                <div className="flex items-center justify-center h-full">
+                                                                    <div className="text-center">
+                                                                        <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                                                                        <span className="text-sm text-muted-foreground">PDF File</span>
                                                                     </div>
-                                                                ) : (
-                                                                    <img
-                                                                        src={businessPermitPreview}
-                                                                        alt="Business permit preview"
-                                                                        className="w-full h-full object-contain"
-                                                                    />
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                        <div className="flex items-center gap-2">
-                                                            <Input
-                                                                ref={businessPermitInputRef}
-                                                                id="business_permit"
-                                                                type="file"
-                                                                accept="image/*,.pdf"
-                                                                className="mt-1 block w-full"
-                                                                name="business_permit"
-                                                                onChange={handleBusinessPermitChange}
-                                                                disabled={employerInformation?.status === 'pending' || employerInformation?.status === 'approved'}
-                                                            />
-                                                            {employerInformation?.business_permit && !businessPermitPreview && (
-                                                                <span className="text-sm text-muted-foreground truncate">
-                                                                    Current file exists
-                                                                </span>
+                                                                </div>
+                                                            ) : (
+                                                                <img
+                                                                    src={businessPermitPreview}
+                                                                    alt="Business permit preview"
+                                                                    className="w-full h-full object-contain"
+                                                                />
                                                             )}
                                                         </div>
-                                                    </div>
-                                                    <InputError
-                                                        className="mt-2"
-                                                        message={
-                                                            errors.business_permit
-                                                        }
-                                                    />
-                                                </div>
-
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="tin">
-                                                        TIN
-                                                    </Label>
-                                                    <Input
-                                                        id="tin"
-                                                        className="mt-1 block w-full"
-                                                        defaultValue={
-                                                            employerInformation
-                                                                ?.tin ?? ''
-                                                        }
-                                                        name="tin"
-                                                        placeholder="Tax Identification Number"
-                                                        disabled={employerInformation?.status === 'pending' || employerInformation?.status === 'approved'}
-                                                    />
-                                                    <InputError
-                                                        className="mt-2"
-                                                        message={errors.tin}
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="type_of_business">
-                                                    Type of business
-                                                </Label>
-                                                <Select
-                                                    value={selectedBusinessType}
-                                                    onValueChange={(val) => {
-                                                        setSelectedBusinessType(val);
-                                                        if (val !== 'others') {
-                                                            setCustomBusinessType('');
-                                                        }
-                                                    }}
-                                                    disabled={
-                                                        employerInformation?.status === 'pending' ||
-                                                        employerInformation?.status === 'approved'
-                                                    }
-                                                >
-                                                    <SelectTrigger id="type_of_business" className="mt-1 w-full">
-                                                        <SelectValue placeholder="Select type of business" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {categories.map((c) => (
-                                                            <SelectItem key={c.id} value={c.name}>
-                                                                {c.name}
-                                                            </SelectItem>
-                                                        ))}
-                                                        <SelectItem value="others">
-                                                            Others (Please specify)
-                                                        </SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-
-                                                {selectedBusinessType === 'others' && (
-                                                    <div className="mt-1.5 space-y-1">
-                                                        <Label
-                                                            htmlFor="custom_type_of_business"
-                                                            className="text-xs text-muted-foreground"
-                                                        >
-                                                            Please specify type of business
-                                                        </Label>
+                                                    )}
+                                                    <div className="flex items-center gap-2">
                                                         <Input
-                                                            id="custom_type_of_business"
-                                                            value={customBusinessType}
-                                                            onChange={(e) =>
-                                                                setCustomBusinessType(e.target.value)
-                                                            }
-                                                            placeholder="e.g. Retail, Healthcare Services, etc."
-                                                            disabled={
-                                                                employerInformation?.status === 'pending' ||
-                                                                employerInformation?.status === 'approved'
-                                                            }
+                                                            ref={businessPermitInputRef}
+                                                            id="business_permit"
+                                                            type="file"
+                                                            accept="image/*,.pdf"
+                                                            className="mt-1 block w-full"
+                                                            name="business_permit"
+                                                            onChange={handleBusinessPermitChange}
+                                                            disabled={employerInformation?.status === 'pending' || employerInformation?.status === 'approved'}
                                                         />
+                                                        {employerInformation?.business_permit && !businessPermitPreview && (
+                                                            <span className="text-sm text-muted-foreground truncate">
+                                                                Current file exists
+                                                            </span>
+                                                        )}
                                                     </div>
-                                                )}
-
-                                                <input
-                                                    type="hidden"
-                                                    name="type_of_business"
-                                                    value={
-                                                        selectedBusinessType === 'others'
-                                                            ? customBusinessType
-                                                            : selectedBusinessType
-                                                    }
-                                                />
+                                                </div>
                                                 <InputError
                                                     className="mt-2"
                                                     message={
-                                                        errors.type_of_business
+                                                        errors.business_permit
                                                     }
                                                 />
                                             </div>

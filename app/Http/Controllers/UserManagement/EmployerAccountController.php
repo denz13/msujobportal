@@ -128,12 +128,12 @@ class EmployerAccountController extends Controller
         abort_unless($user->role === 'employer', 404);
 
         $validated = $request->validate([
-            'position' => ['required', 'string', 'max:255'],
             'contact_number' => ['required', 'string', 'max:255'],
             'business_address' => ['required', 'string', 'max:255'],
             'business_permit' => ['required', 'string', 'max:255'],
-            'tin' => ['required', 'string', 'max:255'],
-            'type_of_business' => ['required', 'string', 'max:255'],
+            'position' => ['nullable', 'string', 'max:255'],
+            'tin' => ['nullable', 'string', 'max:255'],
+            'type_of_business' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', 'max:255'],
         ]);
 

@@ -82,7 +82,7 @@ class CreateNewUser implements CreatesNewUsers
             'contact_number' => $input['contact_number'] ?? '',
             'business_address' => $input['business_address'] ?? '',
             'business_permit' => $permitPath,
-            'tin' => null,
+            'tin' => $input['tin'] ?? null,
             'type_of_business' => null,
             'status' => 'pending',
         ]);

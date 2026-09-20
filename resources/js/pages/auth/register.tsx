@@ -36,6 +36,7 @@ export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm<{
         business_name: string;
         business_permit: File | null;
+        tin: string;
         business_address: string;
         email: string;
         password: string;
@@ -45,6 +46,7 @@ export default function Register() {
     }>({
         business_name: '',
         business_permit: null,
+        tin: '',
         business_address: '',
         email: '',
         password: '',
@@ -232,6 +234,27 @@ export default function Register() {
                                             )}
                                         </div>
                                         <InputError message={errors.business_permit} />
+                                    </div>
+
+                                    {/* TIN */}
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="tin" className="text-slate-200 font-medium">
+                                            TIN <span className="text-xs text-slate-400 font-normal">(Tax Identification Number)</span>
+                                        </Label>
+                                        <div className="relative">
+                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                                <FileText className="h-4 w-4" />
+                                            </div>
+                                            <Input
+                                                id="tin"
+                                                type="text"
+                                                value={data.tin}
+                                                onChange={(e) => setData('tin', e.target.value)}
+                                                placeholder="Enter your TIN"
+                                                className="border-slate-600 bg-slate-900/50 pl-10 text-white placeholder:text-slate-500 focus-visible:ring-emerald-500"
+                                            />
+                                        </div>
+                                        <InputError message={errors.tin} />
                                     </div>
 
                                     {/* Business Address/Location */}

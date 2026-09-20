@@ -940,6 +940,15 @@ export default function EmployerAccount({
                                                     <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
                                                         <dt className="text-xs sm:text-sm font-medium text-muted-foreground sm:min-w-[140px] md:min-w-[160px] shrink-0 flex items-center gap-2">
                                                             <FileText className="size-3 sm:size-4 shrink-0" />
+                                                            <span>TIN</span>
+                                                        </dt>
+                                                        <dd className="text-xs sm:text-sm font-medium flex-1 break-words min-w-0">
+                                                            {selectedEmployer.employer_information.tin || '-'}
+                                                        </dd>
+                                                    </div>
+                                                    <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
+                                                        <dt className="text-xs sm:text-sm font-medium text-muted-foreground sm:min-w-[140px] md:min-w-[160px] shrink-0 flex items-center gap-2">
+                                                            <FileText className="size-3 sm:size-4 shrink-0" />
                                                             <span>Business permit</span>
                                                         </dt>
                                                         <dd className="text-xs sm:text-sm font-medium flex-1 break-words min-w-0">
@@ -1104,6 +1113,19 @@ export default function EmployerAccount({
                                                     placeholder="Permit / reference number"
                                                 />
                                                 <InputError message={formErrors.business_permit} />
+                                            </div>
+
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="update-tin">TIN (Tax Identification Number)</Label>
+                                                <Input
+                                                    id="update-tin"
+                                                    name="tin"
+                                                    defaultValue={
+                                                        employerToUpdate.employer_information?.tin ?? ''
+                                                    }
+                                                    placeholder="Tax Identification Number"
+                                                />
+                                                <InputError message={formErrors.tin} />
                                             </div>
 
                                             <DialogFooter className="gap-2 sm:gap-0 pt-4">

@@ -73,11 +73,28 @@ class PostJobsController extends Controller
             ->values()
             ->all();
 
-        $categories = JobCategory::query()
+        $jobCategoryNames = post_jobs::query()
+            ->whereNotNull('job_category')
+            ->where('job_category', '!=', '')
+            ->distinct()
+            ->pluck('job_category');
+
+        $activeCategoryNames = JobCategory::query()
             ->where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'name'])
-            ->toArray();
+            ->pluck('name');
+
+        $categories = $jobCategoryNames
+            ->concat($activeCategoryNames)
+            ->map(fn ($name) => trim((string) $name))
+            ->filter(fn ($name) => $name !== '')
+            ->unique(fn ($name) => strtolower($name))
+            ->sort(fn ($a, $b) => strcasecmp($a, $b))
+            ->values()
+            ->map(fn ($name) => [
+                'id' => $name,
+                'name' => $name,
+            ])
+            ->all();
 
         return Inertia::render('jobs/post-jobs', [
             'jobs' => $jobs,

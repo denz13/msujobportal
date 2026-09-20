@@ -860,6 +860,27 @@ export default function Profile({
                                             </div>
 
                                             <div className="grid gap-2">
+                                                <Label htmlFor="tin">
+                                                    TIN (Tax Identification Number)
+                                                </Label>
+                                                <Input
+                                                    id="tin"
+                                                    className="mt-1 block w-full"
+                                                    defaultValue={
+                                                        employerInformation
+                                                            ?.tin ?? ''
+                                                    }
+                                                    name="tin"
+                                                    placeholder="Tax Identification Number"
+                                                    disabled={employerInformation?.status === 'pending' || employerInformation?.status === 'approved'}
+                                                />
+                                                <InputError
+                                                    className="mt-2"
+                                                    message={errors.tin}
+                                                />
+                                            </div>
+
+                                            <div className="grid gap-2">
                                                 <Label htmlFor="business_permit">
                                                     Business permit
                                                 </Label>

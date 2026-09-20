@@ -91,7 +91,7 @@ export default function PostJobs() {
     const pageProps = usePage().props as unknown as {
         flash?: { toast?: { type: string; message: string } };
         jobs?: Job[];
-        categories?: { id: number; name: string }[];
+        categories?: { id: number | string; name: string }[];
         errors?: Record<string, string>;
         filters?: { search?: string; status?: string; category?: string };
         uniqueStatuses?: string[];

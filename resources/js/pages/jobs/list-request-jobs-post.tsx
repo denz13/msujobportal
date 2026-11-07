@@ -6,7 +6,6 @@ import {
     Calendar,
     MapPin,
     Eye,
-    DollarSign,
     Users,
     FileText,
     Search,
@@ -15,6 +14,8 @@ import {
     CheckCircle2,
     XCircle,
 } from 'lucide-react';
+import { PhilippinePeso } from '@/components/icons/philippine-peso';
+import { formatSalary } from '@/lib/utils';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -305,8 +306,8 @@ export default function ListRequestJobsPost() {
                                             {/* Body: 3 rows - mt-5, mt-2 like reference */}
                                             <div className="mt-5 text-slate-600 dark:text-slate-500">
                                                 <div className="flex items-center text-sm">
-                                                    <DollarSign className="mr-2 h-4 w-4 shrink-0" />
-                                                    <span className="truncate">Salary: {job.salary ?? '—'}</span>
+                                                    <PhilippinePeso className="mr-2 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                                                    <span className="truncate">Salary: {formatSalary(job.salary)}</span>
                                                 </div>
                                                 <div className="mt-2 flex items-center text-sm">
                                                     <Users className="mr-2 h-4 w-4 shrink-0" />
@@ -443,13 +444,13 @@ export default function ListRequestJobsPost() {
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-3 rounded-lg border bg-card p-4">
-                                        <DollarSign className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+                                        <PhilippinePeso className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                                         <div>
                                             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                                                 Salary
                                             </p>
                                             <p className="mt-0.5 text-sm font-medium">
-                                                {detailsJob.salary || '—'}
+                                                {formatSalary(detailsJob.salary)}
                                             </p>
                                         </div>
                                     </div>

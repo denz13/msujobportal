@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { Toaster } from 'sonner';
 import '../css/app.css';
 import { initializeTheme } from './hooks/use-appearance';
+import { applyThemePalette } from './lib/theme-palettes';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -32,3 +33,9 @@ createInertiaApp({
 
 // This will set light / dark mode on load...
 initializeTheme();
+
+// Apply initial color palette on load...
+if (typeof window !== 'undefined') {
+    const initialPalette = localStorage.getItem('theme_color') || 'emerald';
+    applyThemePalette(initialPalette);
+}

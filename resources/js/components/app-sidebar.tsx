@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Briefcase, Building2, FileText, Layers, LayoutGrid, User, Users } from 'lucide-react';
+import { Briefcase, Building2, FileText, Layers, LayoutGrid, Printer, Shield, User, Users } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import {
     Sidebar,
@@ -66,6 +66,12 @@ const defaultNavGroups: NavGroup[] = [
         label: 'User Management',
         items: [
             {
+                title: 'Accounts',
+                href: '/accounts',
+                icon: Shield,
+                iconClassName: 'h-5 w-5 shrink-0 text-cyan-500 transition-all duration-200 group-hover:scale-110 group-hover:rotate-6 group-hover:text-cyan-400',
+            },
+            {
                 title: 'Employer Accounts',
                 href: '/user-management/employer-account',
                 icon: Users,
@@ -81,6 +87,17 @@ const defaultNavGroups: NavGroup[] = [
                 href: '/admin/logs',
                 icon: FileText,
                 iconClassName: 'h-5 w-5 shrink-0 text-indigo-500 transition-all duration-200 group-hover:scale-110 group-hover:rotate-6 group-hover:text-indigo-400',
+            },
+        ],
+    },
+    {
+        label: 'Reports & Analytics',
+        items: [
+            {
+                title: 'List of Applications',
+                href: '/reports',
+                icon: Printer,
+                iconClassName: 'h-5 w-5 shrink-0 text-teal-500 transition-all duration-200 group-hover:scale-110 group-hover:rotate-6 group-hover:text-teal-400',
             },
         ],
     },
@@ -131,6 +148,17 @@ const employerNavGroups: NavGroup[] = [
                 href: '/applicants/list-of-applied-applicants',
                 icon: Users,
                 iconClassName: 'h-5 w-5 shrink-0 text-violet-500 transition-all duration-200 group-hover:scale-110 group-hover:rotate-6 group-hover:text-violet-400',
+            },
+        ],
+    },
+    {
+        label: 'Reports & Analytics',
+        items: [
+            {
+                title: 'List of Applications',
+                href: '/reports',
+                icon: Printer,
+                iconClassName: 'h-5 w-5 shrink-0 text-teal-500 transition-all duration-200 group-hover:scale-110 group-hover:rotate-6 group-hover:text-teal-400',
             },
         ],
     },

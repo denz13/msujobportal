@@ -33,6 +33,7 @@ class User extends Authenticatable
         'role',
         'photo',
         'status',
+        'theme_color',
     ];
 
     /**
@@ -98,6 +99,14 @@ class User extends Authenticatable
     public function jobSeekerOtherInformation()
     {
         return $this->hasOne(\App\Models\job_seeker_other_information::class, 'users_id');
+    }
+
+    /**
+     * Get all job applications for this user.
+     */
+    public function jobApplications()
+    {
+        return $this->hasMany(\App\Models\job_applications::class, 'users_id');
     }
 
     /**

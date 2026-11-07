@@ -38,27 +38,12 @@ class ListOfAppliedApplicantsController extends Controller
             ]);
         }
 
-        $perPage = $request->get('per_page', 10);
-        $search = $request->get('search', '');
+        $perPage = (int) $request->get('per_page', 10);
+        $search = trim($request->get('search', ''));
         $status = $request->get('status', 'all');
+        $arrangeBy = $request->get('arrange_by', 'latest');
 
-        $baseQuery = job_applications::query();
-
-        if ($user->role === 'employer') {
-            $baseQuery->whereHas('job', fn ($q) => $q->where('user_id', $user->id));
-        }
-
-        if ($status !== 'all' && $status !== '') {
-            $baseQuery->where('status', $status);
-        }
-
-        if ($search !== '') {
-            $baseQuery->whereHas('user', function ($q) use ($search) {
-                $q->whereRaw("CONCAT(firstname, ' ', lastname) LIKE ?", ["%{$search}%"])
-                    ->orWhere('email', 'LIKE', "%{$search}%");
-            });
-        }
-
+        // Unique statuses available for this role
         $uniqueStatusesQuery = job_applications::query();
         if ($user->role === 'employer') {
             $uniqueStatusesQuery->whereHas('job', fn ($q) => $q->where('user_id', $user->id));
@@ -73,62 +58,139 @@ class ListOfAppliedApplicantsController extends Controller
             ->values()
             ->all();
 
-        $applications = $baseQuery
-            ->with([
-                'user' => fn ($q) => $q->select([
-                    'id',
-                    'firstname', 'middlename', 'lastname', 'suffix',
-                    'gender', 'date_of_birth', 'age', 'address', 'email',
-                    'role', 'photo', 'status',
-                ]),
-                'user.jobSeekerOtherInformation',
-                'job:id,job_title',
-            ])
-            ->orderByDesc('created_at')
-            ->paginate($perPage)
-            ->withQueryString();
+        // Base query for applicants (Jobseekers who applied to relevant jobs)
+        $query = User::query()
+            ->whereHas('jobApplications', function ($q) use ($user, $status) {
+                if ($user->role === 'employer') {
+                    $q->whereHas('job', fn ($jq) => $jq->where('user_id', $user->id));
+                }
+                if ($status !== 'all' && $status !== '') {
+                    $q->where('status', $status);
+                }
+            });
 
-        $applicants = $applications->getCollection()->map(fn ($a) => [
-            'id' => $a->id,
-            'jobseeker' => [
-                'display_name' => $a->user?->display_name ?? '',
-                'firstname' => $a->user?->firstname ?? '',
-                'middlename' => $a->user?->middlename ?? '',
-                'lastname' => $a->user?->lastname ?? '',
-                'suffix' => $a->user?->suffix ?? '',
-                'gender' => $a->user?->gender ?? '',
-                'date_of_birth' => $a->user?->date_of_birth ?? null,
-                'age' => $a->user?->age ?? null,
-                'address' => $a->user?->address ?? '',
-                'email' => $a->user?->email ?? '',
-                'role' => $a->user?->role ?? '',
-                'photo' => $a->user?->photo ?? null,
-                'status' => $a->user?->status ?? '',
-                'other_info' => $a->user?->jobSeekerOtherInformation ? [
-                    'skills' => $a->user->jobSeekerOtherInformation->skills ?? '',
-                    'work' => $a->user->jobSeekerOtherInformation->work ?? '',
-                    'status' => $a->user->jobSeekerOtherInformation->status ?? '',
-                ] : null,
-            ],
-            'job_title' => $a->job?->job_title ?? '',
-            'applied_at' => $a->created_at?->format('c') ?? null,
-            'status' => $a->status ?? null,
-            'resume_path' => $a->resume_path ?? null,
-            'description' => $a->description ?? null,
-        ])->values()->all();
+        // Search by candidate name, email, or qualification/skills/work experience
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw("CONCAT(firstname, ' ', lastname) LIKE ?", ["%{$search}%"])
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhereHas('jobSeekerOtherInformation', function ($oq) use ($search) {
+                        $oq->where('skills', 'LIKE', "%{$search}%")
+                            ->orWhere('work', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        // Arrange the job seekers based on qualifications or other criteria
+        if ($arrangeBy === 'qualification') {
+            $query->leftJoin('job_seeker_other_information', 'users.id', '=', 'job_seeker_other_information.users_id')
+                ->select('users.*')
+                ->orderByRaw('CASE WHEN job_seeker_other_information.skills IS NOT NULL AND TRIM(job_seeker_other_information.skills) != "" THEN 0 ELSE 1 END')
+                ->orderBy('job_seeker_other_information.skills', 'asc');
+        } elseif ($arrangeBy === 'name') {
+            $query->orderBy('firstname', 'asc')->orderBy('lastname', 'asc');
+        } elseif ($arrangeBy === 'applications') {
+            $query->withCount(['jobApplications' => function ($q) use ($user, $status) {
+                if ($user->role === 'employer') {
+                    $q->whereHas('job', fn ($jq) => $jq->where('user_id', $user->id));
+                }
+                if ($status !== 'all' && $status !== '') {
+                    $q->where('status', $status);
+                }
+            }])->orderByDesc('job_applications_count');
+        } else {
+            // Latest application by default
+            $latestAppSubquery = job_applications::query()
+                ->selectRaw('MAX(created_at)')
+                ->whereColumn('job_applications.users_id', 'users.id');
+            if ($user->role === 'employer') {
+                $latestAppSubquery->whereHas('job', fn ($jq) => $jq->where('user_id', $user->id));
+            }
+            if ($status !== 'all' && $status !== '') {
+                $latestAppSubquery->where('status', $status);
+            }
+            $query->orderByDesc($latestAppSubquery);
+        }
+
+        $paginator = $query->paginate($perPage)->withQueryString();
+
+        // Eager load relations for the paginated collection
+        $paginator->getCollection()->load([
+            'jobSeekerOtherInformation',
+            'jobApplications' => function ($q) use ($user, $status) {
+                if ($user->role === 'employer') {
+                    $q->whereHas('job', fn ($jq) => $jq->where('user_id', $user->id));
+                }
+                if ($status !== 'all' && $status !== '') {
+                    $q->where('status', $status);
+                }
+                $q->with('job:id,job_title,job_category,required_qualifications')
+                    ->orderByDesc('created_at');
+            },
+        ]);
+
+        $applicants = $paginator->getCollection()->map(function ($seeker) {
+            $applications = $seeker->jobApplications->map(fn ($a) => [
+                'id' => $a->id,
+                'job_id' => $a->post_jobs_id,
+                'job_title' => $a->job?->job_title ?? '—',
+                'job_category' => $a->job?->job_category ?? '—',
+                'job_qualifications' => $a->job?->required_qualifications ?? '—',
+                'applied_at' => $a->created_at?->format('c') ?? null,
+                'status' => $a->status ?? null,
+                'resume_path' => $a->resume_path ?? null,
+                'description' => $a->description ?? null,
+                'remarks' => $a->remarks ?? null,
+            ])->values()->all();
+
+            $skills = $seeker->jobSeekerOtherInformation?->skills;
+            $work = $seeker->jobSeekerOtherInformation?->work;
+
+            return [
+                'id' => $seeker->id,
+                'jobseeker' => [
+                    'id' => $seeker->id,
+                    'display_name' => $seeker->display_name ?: trim($seeker->firstname . ' ' . $seeker->lastname),
+                    'firstname' => $seeker->firstname ?? '',
+                    'middlename' => $seeker->middlename ?? '',
+                    'lastname' => $seeker->lastname ?? '',
+                    'suffix' => $seeker->suffix ?? '',
+                    'gender' => $seeker->gender ?? '',
+                    'date_of_birth' => $seeker->date_of_birth ?? null,
+                    'age' => $seeker->age ?? null,
+                    'address' => $seeker->address ?? '',
+                    'email' => $seeker->email ?? '',
+                    'role' => $seeker->role ?? '',
+                    'photo' => $seeker->photo ?? null,
+                    'status' => $seeker->status ?? '',
+                    'other_info' => $seeker->jobSeekerOtherInformation ? [
+                        'skills' => $seeker->jobSeekerOtherInformation->skills ?? '',
+                        'work' => $seeker->jobSeekerOtherInformation->work ?? '',
+                        'status' => $seeker->jobSeekerOtherInformation->status ?? '',
+                    ] : null,
+                ],
+                'skills' => $skills ? array_values(array_filter(array_map('trim', explode(',', $skills)))) : [],
+                'skills_raw' => $skills ?? '',
+                'work_experience' => $work ?? '',
+                'total_applications' => count($applications),
+                'latest_applied_at' => $applications[0]['applied_at'] ?? null,
+                'applications' => $applications,
+            ];
+        })->values()->all();
 
         return Inertia::render('applicants/list-of-applied-applicants', [
             'applicants' => $applicants,
             'pagination' => [
-                'links' => $applications->linkCollection()->toArray(),
-                'from' => $applications->firstItem(),
-                'to' => $applications->lastItem(),
-                'total' => $applications->total(),
-                'current_page' => $applications->currentPage(),
+                'links' => $paginator->linkCollection()->toArray(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+                'total' => $paginator->total(),
+                'current_page' => $paginator->currentPage(),
             ],
             'filters' => [
                 'search' => $search,
                 'status' => $status,
+                'arrange_by' => $arrangeBy,
             ],
             'uniqueStatuses' => $uniqueStatuses,
         ]);

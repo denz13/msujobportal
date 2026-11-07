@@ -30,4 +30,9 @@ class post_jobs extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    public function applications()
+    {
+        return $this->hasMany(\App\Models\job_applications::class, 'post_jobs_id');
+    }
 }

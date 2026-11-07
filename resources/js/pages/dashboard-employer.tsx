@@ -27,6 +27,7 @@ import type { BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
 import { index as listOfAppliedApplicantsIndex } from '@/routes/list-of-applied-applicants';
 import { index as postJobsIndex } from '@/routes/post-jobs';
+import { TopJobsByLocation, type TopJobItem, type LocationStat } from '@/components/top-jobs-by-location';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -92,8 +93,17 @@ export default function DashboardEmployer() {
         stats?: DashboardStats;
         applicationStats?: ApplicationStats;
         totalJobseekers?: number;
+        topJobsByLocation?: TopJobItem[];
+        topLocations?: LocationStat[];
     };
-    const { auth, stats = { total_jobs: 0, pending: 0, approved: 0, declined: 0, active: 0 }, applicationStats = { total: 0, by_status: {} }, totalJobseekers = 0 } = pageProps;
+    const {
+        auth,
+        stats = { total_jobs: 0, pending: 0, approved: 0, declined: 0, active: 0 },
+        applicationStats = { total: 0, by_status: {} },
+        totalJobseekers = 0,
+        topJobsByLocation = [],
+        topLocations = [],
+    } = pageProps;
     const user = auth?.user;
     const displayName =
         user?.display_name ??
@@ -366,6 +376,15 @@ export default function DashboardEmployer() {
                         );
                     })}
                 </div>
+
+                {/* Top 10 Jobs by Location */}
+                <TopJobsByLocation
+                    jobs={topJobsByLocation}
+                    locations={topLocations}
+                    showEmployer={false}
+                    title="Top 10 Jobs by Location"
+                    subtitle="Your most in-demand job postings and applicant traffic ranked by location"
+                />
 
                 {/* Details Dialog Modal */}
                 <Dialog open={modalOpen} onOpenChange={setModalOpen}>

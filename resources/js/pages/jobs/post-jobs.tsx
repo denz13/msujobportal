@@ -11,10 +11,11 @@ import {
     Search,
     Trash2,
     Eye,
-    DollarSign,
     Users,
     FileText,
 } from 'lucide-react';
+import { PhilippinePeso } from '@/components/icons/philippine-peso';
+import { formatSalary } from '@/lib/utils';
 import PostJobsController from '@/actions/App/Http/Controllers/Jobs/PostJobsController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -47,6 +48,7 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { Pagination } from '@/components/pagination';
 import { Switch } from '@/components/ui/switch';
+import { SearchableCategoryDropdown } from '@/components/searchable-category-dropdown';
 import type { BreadcrumbItem } from '@/types';
 import { index as postJobsIndex } from '@/routes/post-jobs';
 
@@ -332,20 +334,34 @@ export default function PostJobs() {
                 </div>
 
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-1 flex-wrap gap-4 items-center">
-                        <div className="relative flex-1 min-w-[200px] sm:max-w-xs">
-                            <label htmlFor="search" className="sr-only">Search jobs</label>
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                                id="search"
-                                type="text"
-                                placeholder="Search by title, category, or location..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9"
-                            />
+                    <div className="flex flex-1 flex-wrap gap-3 items-center">
+                        {/* Search input with Searchable Category dropdown right at the side */}
+                        <div className="flex flex-1 min-w-[280px] max-w-2xl items-center gap-2">
+                            <div className="relative flex-1">
+                                <label htmlFor="search" className="sr-only">Search jobs</label>
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    id="search"
+                                    type="text"
+                                    placeholder="Search by title, category, or location..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-9"
+                                />
+                            </div>
+                            <div className="w-[180px] sm:w-[210px] shrink-0">
+                                <SearchableCategoryDropdown
+                                    categories={categories}
+                                    value={categoryFilter}
+                                    onChange={handleCategoryFilterChange}
+                                    allOptionLabel="All Categories"
+                                    placeholder="All Categories"
+                                />
+                            </div>
                         </div>
-                        <div className="w-full sm:w-[180px]">
+
+                        {/* Status / Availability Filter */}
+                        <div className="w-full sm:w-[170px]">
                             <label htmlFor="status-filter" className="sr-only">Filter by status</label>
                             <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
                                 <SelectTrigger id="status-filter" className="w-full">
@@ -355,23 +371,9 @@ export default function PostJobs() {
                                     <SelectItem value="all">All Status</SelectItem>
                                     {uniqueStatuses.map((s) => (
                                         <SelectItem key={s} value={s}>
-                                            <span className="capitalize">{s}</span>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="w-full sm:w-[200px]">
-                            <label htmlFor="category-filter" className="sr-only">Filter by category</label>
-                            <Select value={categoryFilter} onValueChange={handleCategoryFilterChange}>
-                                <SelectTrigger id="category-filter" className="w-full">
-                                    <SelectValue placeholder="All Categories" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Categories</SelectItem>
-                                    {categories.map((c) => (
-                                        <SelectItem key={c.id} value={c.name}>
-                                            {c.name}
+                                            <span className="capitalize">
+                                                {s === 'active' ? 'Available (Active)' : s === 'not_available' ? 'Not Available' : s}
+                                            </span>
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -613,13 +615,13 @@ export default function PostJobs() {
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-3 rounded-lg border bg-card p-4">
-                                        <DollarSign className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+                                        <PhilippinePeso className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                                         <div>
                                             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                                                 Salary
                                             </p>
                                             <p className="mt-0.5 text-sm font-medium">
-                                                {detailsJob.salary || '—'}
+                                                {formatSalary(detailsJob.salary)}
                                             </p>
                                         </div>
                                     </div>
@@ -741,29 +743,18 @@ export default function PostJobs() {
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="modal_job_category">Job category <span className="text-destructive">*</span></Label>
-                                    <Select
+                                    <SearchableCategoryDropdown
+                                        categories={[...categories, { id: 'others', name: 'Others (Please specify)' }]}
                                         value={selectedCategory}
-                                        onValueChange={(val) => {
+                                        onChange={(val) => {
                                             setSelectedCategory(val);
                                             if (val !== 'others') {
                                                 setCustomCategory('');
                                             }
                                         }}
-                                    >
-                                        <SelectTrigger id="modal_job_category" className="w-full">
-                                            <SelectValue placeholder="Select a category" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {categories.map((c) => (
-                                                <SelectItem key={c.id} value={c.name}>
-                                                    {c.name}
-                                                </SelectItem>
-                                            ))}
-                                            <SelectItem value="others">
-                                                Others (Please specify)
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                        includeAllOption={false}
+                                        placeholder="Search and select a category"
+                                    />
 
                                     {/* If Others is selected, show input to specify */}
                                     {selectedCategory === 'others' && (
@@ -818,7 +809,7 @@ export default function PostJobs() {
                                             id="modal_salary"
                                             name="salary"
                                             defaultValue={editingJob?.salary ?? ''}
-                                            placeholder="e.g. 50,000 - 70,000 PHP"
+                                            placeholder="e.g. ₱25,000 - ₱35,000"
                                         />
                                         <InputError message={errors.salary} />
                                     </div>

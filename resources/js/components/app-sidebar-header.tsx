@@ -1,12 +1,30 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Bell, Check, Trash2, AlertTriangle, Calendar, Clock, MapPin, ExternalLink, Mail, UserCheck } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+    Bell,
+    Check,
+    Trash2,
+    AlertTriangle,
+    Calendar,
+    Clock,
+    MapPin,
+    ExternalLink,
+    Mail,
+    UserCheck,
+    Search,
+    X,
+    Briefcase,
+    Users,
+    Building2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { AppearanceToggle } from '@/components/appearance-tabs';
+import { ColorPaletteDropdown } from '@/components/color-palette-selector';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
     Dialog,
     DialogContent,
@@ -56,6 +74,60 @@ export function AppSidebarHeader({
     const [notifItems, setNotifItems] = useState<NotificationItem[]>([]);
     const [unreadCount, setUnreadCount] = useState<number>(unreadNotificationsCount);
     const [selectedNotice, setSelectedNotice] = useState<NotificationItem | null>(null);
+
+    // Header Quick Search State
+    const [headerSearch, setHeaderSearch] = useState('');
+    const [searchFocused, setSearchFocused] = useState(false);
+    const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+    const searchRef = useRef<HTMLDivElement>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    const handleSearchSubmit = (e?: React.FormEvent, targetPath?: string) => {
+        if (e) e.preventDefault();
+        const trimmed = headerSearch.trim();
+        if (!trimmed) return;
+
+        setSearchFocused(false);
+        setMobileSearchOpen(false);
+
+        if (targetPath) {
+            router.visit(`${targetPath}?search=${encodeURIComponent(trimmed)}`);
+            return;
+        }
+
+        const path = window.location.pathname;
+        if (path.includes('/applicants/')) {
+            router.visit(`/applicants/list-of-applied-applicants?search=${encodeURIComponent(trimmed)}`);
+        } else if (path.includes('/employer-account')) {
+            router.visit(`/user-management/employer-account?search=${encodeURIComponent(trimmed)}`);
+        } else if (path.includes('/list-request-jobs-post')) {
+            router.visit(`/jobs/list-request-jobs-post?search=${encodeURIComponent(trimmed)}`);
+        } else {
+            router.visit(`/jobs/post-jobs?search=${encodeURIComponent(trimmed)}`);
+        }
+    };
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setSearchFocused(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        function handleKeyDown(event: KeyboardEvent) {
+            if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+                event.preventDefault();
+                searchInputRef.current?.focus();
+                setSearchFocused(true);
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     const csrf = useMemo(
         () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '',
@@ -202,13 +274,125 @@ export function AppSidebarHeader({
     };
 
     return (
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border/50 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
-            <div className="flex flex-1 items-center gap-2">
-                <SidebarTrigger className="-ml-1" />
-                <Breadcrumbs breadcrumbs={breadcrumbs} />
-            </div>
-            <div className="relative z-[60] flex items-center gap-2">
-                <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen} modal={false}>
+        <header className="relative flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border/50 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
+            {mobileSearchOpen ? (
+                <div className="flex w-full items-center gap-2 animate-in fade-in-0 duration-150">
+                    <form onSubmit={(e) => handleSearchSubmit(e)} className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            autoFocus
+                            type="search"
+                            value={headerSearch}
+                            onChange={(e) => setHeaderSearch(e.target.value)}
+                            placeholder="Search jobs, applicants, employers..."
+                            className="h-9 pl-9 pr-8 text-sm bg-muted/40 rounded-lg"
+                        />
+                        {headerSearch && (
+                            <button
+                                type="button"
+                                onClick={() => setHeaderSearch('')}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        )}
+                    </form>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                            setMobileSearchOpen(false);
+                            setHeaderSearch('');
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                </div>
+            ) : (
+                <>
+                    <div className="flex flex-1 items-center gap-2 min-w-0">
+                        <SidebarTrigger className="-ml-1 shrink-0" />
+                        <Breadcrumbs breadcrumbs={breadcrumbs} />
+                    </div>
+
+                    {/* Desktop Search Bar in Header */}
+                    <div ref={searchRef} className="relative hidden sm:block w-48 md:w-64 lg:w-80">
+                        <form onSubmit={(e) => handleSearchSubmit(e)}>
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                            <Input
+                                ref={searchInputRef}
+                                type="search"
+                                value={headerSearch}
+                                onChange={(e) => setHeaderSearch(e.target.value)}
+                                onFocus={() => setSearchFocused(true)}
+                                placeholder="Search portal... (Ctrl+K)"
+                                className="h-8 pl-9 pr-7 text-xs bg-muted/40 hover:bg-muted/60 focus:bg-background rounded-lg border-border/60 transition-colors"
+                            />
+                            {headerSearch && (
+                                <button
+                                    type="button"
+                                    onClick={() => setHeaderSearch('')}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                </button>
+                            )}
+                        </form>
+
+                        {/* Instant Search Suggestions Dropdown */}
+                        {searchFocused && headerSearch.trim().length > 0 && (
+                            <div className="absolute left-0 right-0 top-full z-[70] mt-1.5 overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-xl animate-in fade-in-0 zoom-in-95">
+                                <div className="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                    Search for "{headerSearch}" in:
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => handleSearchSubmit(undefined, '/jobs/post-jobs')}
+                                    className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+                                >
+                                    <Briefcase className="h-4 w-4 text-blue-500 shrink-0" />
+                                    <span className="flex-1">Jobs Management</span>
+                                    <Badge variant="outline" className="text-[10px]">Enter</Badge>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleSearchSubmit(undefined, '/applicants/list-of-applied-applicants')}
+                                    className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+                                >
+                                    <Users className="h-4 w-4 text-emerald-500 shrink-0" />
+                                    <span className="flex-1">Applied Applicants</span>
+                                    <Badge variant="outline" className="text-[10px]">Jump</Badge>
+                                </button>
+                                {auth?.user?.role === 'admin' && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSearchSubmit(undefined, '/user-management/employer-account')}
+                                        className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+                                    >
+                                        <Building2 className="h-4 w-4 text-amber-500 shrink-0" />
+                                        <span className="flex-1">Employer Accounts</span>
+                                        <Badge variant="outline" className="text-[10px]">Jump</Badge>
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="relative z-[60] flex items-center gap-1.5 sm:gap-2">
+                        {/* Mobile Search Icon Button */}
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setMobileSearchOpen(true)}
+                            className="sm:hidden relative size-9 rounded-full text-muted-foreground hover:text-foreground"
+                            aria-label="Search"
+                        >
+                            <Search className="size-5" />
+                        </Button>
+
+                        <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen} modal={false}>
                     <DropdownMenuTrigger asChild>
                         <Button
                             type="button"
@@ -330,6 +514,7 @@ export function AppSidebarHeader({
                         </div>
                     </DropdownMenuContent>
                 </DropdownMenu>
+                <ColorPaletteDropdown />
                 <AppearanceToggle variant="icon" />
             </div>
             <DropdownMenu modal={false}>
@@ -357,6 +542,8 @@ export function AppSidebarHeader({
                     <UserMenuContent user={auth.user} />
                 </DropdownMenuContent>
             </DropdownMenu>
+            </>
+            )}
 
             {/* Delete Notification Confirmation Modal */}
             <Dialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>

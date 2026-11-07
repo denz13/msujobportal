@@ -74,6 +74,7 @@ class HandleInertiaRequests extends Middleware
             'employerProfile' => $employerProfile,
             'unreadNotificationsCount' => $unreadNotificationsCount,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'themeColor' => $user?->theme_color ?? \App\Models\SiteSetting::get('theme_color', 'emerald'),
             'flash' => [
                 'toast' => $request->session()->get('toast'),
             ],

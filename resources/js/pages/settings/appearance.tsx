@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import AppearanceTabs from '@/components/appearance-tabs';
+import { ColorPaletteGrid } from '@/components/color-palette-selector';
 import Heading from '@/components/heading';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
@@ -21,13 +22,19 @@ export default function Appearance() {
             <h1 className="sr-only">Appearance Settings</h1>
 
             <SettingsLayout>
-                <div className="space-y-6">
-                    <Heading
-                        variant="small"
-                        title="Appearance settings"
-                        description="Update your account's appearance settings"
-                    />
-                    <AppearanceTabs />
+                <div className="space-y-8">
+                    <div className="space-y-4">
+                        <Heading
+                            variant="small"
+                            title="Theme Mode"
+                            description="Toggle between light and dark display modes"
+                        />
+                        <AppearanceTabs />
+                    </div>
+
+                    <div className="border-t border-border pt-6">
+                        <ColorPaletteGrid />
+                    </div>
                 </div>
             </SettingsLayout>
         </AppLayout>

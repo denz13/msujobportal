@@ -16,6 +16,7 @@ import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
 import employerAccount from '@/routes/employer-account';
+import { TopJobsByLocation, type TopJobItem, type LocationStat } from '@/components/top-jobs-by-location';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -75,8 +76,10 @@ export default function Dashboard() {
     const pageProps = usePage().props as unknown as {
         auth?: { user?: { firstname?: string; lastname?: string; display_name?: string } };
         employers?: Employer[];
+        topJobsByLocation?: TopJobItem[];
+        topLocations?: LocationStat[];
     };
-    const { auth, employers: employersList = [] } = pageProps;
+    const { auth, employers: employersList = [], topJobsByLocation = [], topLocations = [] } = pageProps;
     const employers = employersList;
     const user = auth?.user;
     const displayName =
@@ -298,6 +301,15 @@ export default function Dashboard() {
                         </CardContent>
                     </Card>
                 )}
+
+                {/* Top 10 Jobs by Location */}
+                <TopJobsByLocation
+                    jobs={topJobsByLocation}
+                    locations={topLocations}
+                    showEmployer={true}
+                    title="Top 10 Jobs by Location (Platform Wide)"
+                    subtitle="Most in-demand job vacancies categorized by geographic location across all employers"
+                />
             </div>
         </AppLayout>
     );

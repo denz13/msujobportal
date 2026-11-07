@@ -35,7 +35,7 @@ class PostJobsSeeder extends Seeder
                     'job_category' => fake()->randomElement(['Information Technology', 'Human Resources', 'Engineering', 'Marketing', 'Sales']),
                     'required_qualifications' => fake()->paragraphs(2, true),
                     'location' => fake()->city() . ', ' . fake()->state(),
-                    'salary' => fake()->randomElement(['$50,000 - $70,000', '$80,000 - $100,000', '$120,000 - $150,000']),
+                    'salary' => fake()->randomElement(['₱25,000 - ₱35,000', '₱40,000 - ₱60,000', '₱70,000 - ₱90,000']),
                     'number_of_vacancies' => rand(1, 5),
                     'photo' => null,
                     'remarks' => fake()->sentence(),

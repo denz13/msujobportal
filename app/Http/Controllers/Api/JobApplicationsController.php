@@ -97,6 +97,8 @@ class JobApplicationsController extends Controller
                         'id' => $job->id,
                         'job_title' => $job->job_title,
                         'job_category' => $job->job_category,
+                        'job_description' => $job->job_description,
+                        'required_qualifications' => $job->required_qualifications,
                         'location' => $job->location,
                         'salary' => $job->salary,
                         'number_of_vacancies' => $job->number_of_vacancies,

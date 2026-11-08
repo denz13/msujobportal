@@ -27,7 +27,7 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         }
         .header {
-            background-color: #800000; /* MSU Maroon */
+            background-color: #800000; /* Header Maroon Banner */
             padding: 28px 24px;
             text-align: center;
             color: #ffffff;
@@ -157,8 +157,8 @@
     <div class="wrapper">
         <div class="container">
             <div class="header">
-                <h1>MSU Job Portal</h1>
-                <p>Mindanao State University Job Placement & Application System</p>
+                <h1>SND Job Portal</h1>
+                <p>SND Job Placement & Application System</p>
             </div>
             <div class="content">
                 <div class="greeting">
@@ -187,7 +187,7 @@
                         </div>
                     </div>
                     <p style="font-size: 14px; line-height: 1.6; color: #4b5563;">
-                        We appreciate the time you took to apply. We encourage you to continue browsing and applying for other open opportunities on the MSU Job Portal.
+                        We appreciate the time you took to apply. We encourage you to continue browsing and applying for other open opportunities on the SND Job Portal.
                     </p>
                 @endif
 
@@ -288,7 +288,7 @@
                 @endif
             </div>
             <div class="footer">
-                <p>This is an automated notification from the <strong>MSU Job Portal</strong>.</p>
+                <p>This is an automated notification from the <strong>SND Job Portal</strong>.</p>
                 <p>Please do not reply directly to this email.</p>
             </div>
         </div>

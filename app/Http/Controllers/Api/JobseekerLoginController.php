@@ -40,6 +40,30 @@ class JobseekerLoginController extends Controller
             ], 403);
         }
 
+        // Check if email has been verified via OTP
+        if (is_null($user->email_verified_at)) {
+            $otp = str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+            \Illuminate\Support\Facades\DB::table('password_reset_tokens')->updateOrInsert(
+                ['email' => $user->email],
+                ['token' => $otp, 'created_at' => now()]
+            );
+
+            $userName = trim(($user->firstname ?? '') . ' ' . ($user->lastname ?? '')) ?: 'Job Seeker';
+            try {
+                \Illuminate\Support\Facades\Mail::to($user->email)->send(
+                    new \App\Mail\JobseekerOtpMail(userName: $userName, otpCode: $otp)
+                );
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Login OTP sending failed: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'requires_verification' => true,
+                'email' => $user->email,
+                'message' => 'Please verify your Gmail address. A 6-digit verification code (OTP) was sent to ' . $user->email . '.',
+            ], 200);
+        }
+
         return response()->json([
             'message' => 'Login successful.',
             'user' => $user->only(['id', 'firstname', 'middlename', 'lastname', 'email', 'role', 'status']),

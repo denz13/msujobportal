@@ -50,6 +50,7 @@ class JobseekerRegisterController extends Controller
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'] ?? 'jobseeker',
             'status' => $validated['status'] ?? 'approved',
+            'email_verified_at' => null,
         ];
 
         try {
@@ -64,6 +65,25 @@ class JobseekerRegisterController extends Controller
                     'status' => $other['status'] ?? 'approved',
                 ]);
             });
+
+            // Generate and send 6-digit OTP to user's Gmail
+            $otp = str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+            DB::table('password_reset_tokens')->updateOrInsert(
+                ['email' => $validated['email']],
+                [
+                    'token' => $otp,
+                    'created_at' => now(),
+                ]
+            );
+
+            $userName = trim($validated['firstname'] . ' ' . $validated['lastname']) ?: 'Job Seeker';
+            try {
+                \Illuminate\Support\Facades\Mail::to($validated['email'])->send(
+                    new \App\Mail\JobseekerOtpMail(userName: $userName, otpCode: $otp)
+                );
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Registration OTP email send failed: ' . $e->getMessage());
+            }
         } catch (\Exception $e) {
             return response()->json(
                 ['message' => 'Registration failed. Please try again.'],
@@ -72,7 +92,9 @@ class JobseekerRegisterController extends Controller
         }
 
         return response()->json([
-            'message' => 'Registration successful. You can now sign in.',
+            'message' => 'Registration successful! A 6-digit verification code (OTP) was sent to your Gmail.',
+            'requires_verification' => true,
+            'email' => $validated['email'],
         ], 201);
     }
 }

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use App\Http\Controllers\Api\DatabaseBrowserController;
 use App\Http\Controllers\Api\ApprovedJobsController;
@@ -6,12 +6,17 @@ use App\Http\Controllers\Api\JobApplicationsController;
 use App\Http\Controllers\Api\NotificationsController;
 use App\Http\Controllers\Api\SaveJobsController;
 use App\Http\Controllers\Api\JobseekerLoginController;
+use App\Http\Controllers\Api\JobseekerOtpController;
 use App\Http\Controllers\Api\JobseekerProfileController;
 use App\Http\Controllers\Api\JobseekerRegisterController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('jobseeker/register', JobseekerRegisterController::class);
 Route::post('jobseeker/login', JobseekerLoginController::class);
+Route::post('jobseeker/send-otp', [JobseekerOtpController::class, 'sendOtp']);
+Route::post('jobseeker/verify-otp', [JobseekerOtpController::class, 'verifyOtp']);
+Route::post('jobseeker/forgot-password', [JobseekerOtpController::class, 'forgotPassword']);
+Route::post('jobseeker/reset-password', [JobseekerOtpController::class, 'resetPassword']);
 Route::get('jobseeker/{user}/profile', [JobseekerProfileController::class, 'show']);
 Route::put('jobseeker/{user}/profile', [JobseekerProfileController::class, 'update']);
 Route::get('jobs/approved', [ApprovedJobsController::class, 'index']);
